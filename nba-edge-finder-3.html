@@ -1,0 +1,2010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NBA Edge Finder — Hard Rock Value</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #050709;
+    --s1: #090d12;
+    --s2: #0d1219;
+    --s3: #111820;
+    --b1: #162030;
+    --b2: #1c2a3a;
+    --text: #b8cfe0;
+    --muted: #3d5468;
+    --muted2: #263545;
+    --hr: #8b5cf6;
+    --hr-dim: rgba(139,92,246,0.12);
+    --cons: #4da6ff;
+    --cons-dim: rgba(77,166,255,0.09);
+    --green: #00e5a0;
+    --green-dim: rgba(0,229,160,0.07);
+    --red: #ff3355;
+    --yellow: #ffbb00;
+    --purple: #a855f7;
+    --white: #e0eefa;
+    --nba: #8b5cf6;
+    --hdr-bg: rgba(5,7,9,0.95);
+    --theme-transition: background 0.25s, color 0.25s, border-color 0.25s;
+  }
+
+  /* ── LIGHT MODE ── */
+  body.light {
+    --bg: #f0f4f8;
+    --s1: #ffffff;
+    --s2: #e8eef5;
+    --s3: #dde5ef;
+    --b1: #cdd8e6;
+    --b2: #b8c8d8;
+    --text: #1a2a3a;
+    --muted: #7a90a8;
+    --muted2: #9aaabb;
+    --hr: #6d28d9;
+    --hr-dim: rgba(109,40,217,0.1);
+    --cons: #1a7fd4;
+    --cons-dim: rgba(26,127,212,0.1);
+    --green: #00a870;
+    --green-dim: rgba(0,168,112,0.08);
+    --red: #d42040;
+    --yellow: #cc8800;
+    --purple: #7c3aed;
+    --white: #0f1a26;
+    --hdr-bg: rgba(240,244,248,0.96);
+  }
+
+  body.light::before {
+    background:
+      radial-gradient(ellipse 60% 35% at 0% 0%, rgba(109,40,217,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse 40% 30% at 100% 100%, rgba(26,127,212,0.05) 0%, transparent 50%);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 35% at 0% 0%, rgba(139,92,246,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse 40% 30% at 100% 100%, rgba(77,166,255,0.05) 0%, transparent 50%);
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+  /* ── HEADER ── */
+  .hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid var(--b1);
+    position: sticky; top: 0; z-index: 100;
+    background: var(--hdr-bg); backdrop-filter: blur(20px); transition: var(--theme-transition);
+    margin: 0 -20px; padding-left: 20px; padding-right: 20px;
+  }
+
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-ball {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--hr), #5b21b6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; box-shadow: 0 0 20px rgba(139,92,246,0.4);
+    flex-shrink: 0; position: relative;
+  }
+  .brand-ball::after {
+    content: '';
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .brand-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px; font-weight: 800; color: var(--white);
+    letter-spacing: .5px; text-transform: uppercase;
+  }
+  .brand-sub {
+    font-size: 10px; color: var(--muted); letter-spacing: 1.5px;
+    text-transform: uppercase; margin-top: 1px;
+  }
+
+  .hdr-right { display: flex; align-items: center; gap: 8px; }
+
+  .badge {
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 4px; border: 1px solid; font-weight: 600;
+  }
+  .badge-demo { background: rgba(255,187,0,.08); border-color: rgba(255,187,0,.28); color: var(--yellow); }
+  .badge-live { background: rgba(0,229,160,.08); border-color: rgba(0,229,160,.28); color: var(--green); display: flex; align-items: center; gap: 5px; }
+  .pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: pu 2s infinite; }
+  @keyframes pu { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,229,160,.5)} 50%{opacity:.4;box-shadow:0 0 0 4px rgba(0,229,160,0)} }
+
+  .xbtn {
+    background: transparent; border: 1px solid var(--b2); color: var(--muted);
+    padding: 6px 12px; border-radius: 5px; font-size: 11px; font-weight: 600;
+    cursor: pointer; transition: all .15s; letter-spacing: .5px; font-family: 'Barlow', sans-serif;
+  }
+  .xbtn:hover { border-color: var(--hr); color: var(--hr); }
+  .xbtn:disabled { opacity: .3; cursor: not-allowed; }
+  .xbtn-fill { background: var(--hr); border-color: var(--hr); color: #fff; }
+  .xbtn-fill:hover { opacity: .85; color: #fff; border-color: var(--hr); }
+
+  /* ── THEME TOGGLE ── */
+  .theme-toggle {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--s2); border: 1px solid var(--b2);
+    cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s; flex-shrink: 0;
+  }
+  .theme-toggle:hover { border-color: var(--hr); background: var(--hr-dim); transform: rotate(15deg); }
+
+  /* ── GLOBAL THEME TRANSITION ── */
+  body, .hdr, .cfg, .stat, .gcard, .prop-game-block,
+  .bkrow, .val-alert, .odds-grid, .ocol, .gbot, .logic,
+  .books-banner, .ctrl-bar, .main-tabs {
+    transition: background 0.25s, border-color 0.25s, color 0.25s;
+  }
+
+  /* ── GLOBAL STAT CATEGORY DROPDOWN ── */
+  .prop-global-filter {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    background: var(--s1); border: 1px solid var(--b1); border-radius: 8px;
+  }
+  .pgf-label {
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    letter-spacing: 1.2px; text-transform: uppercase; white-space: nowrap;
+  }
+  .pgf-select {
+    background: var(--bg); border: 1px solid var(--b2); color: var(--text);
+    padding: 6px 30px 6px 10px; border-radius: 5px;
+    font-size: 12px; font-weight: 600; font-family: 'Barlow', sans-serif;
+    cursor: pointer; outline: none; transition: border-color .2s;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b5cf6' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    min-width: 160px;
+  }
+  .pgf-select:focus { border-color: var(--hr); }
+  .pgf-count {
+    font-size: 11px; color: var(--muted); font-weight: 500;
+    margin-left: auto; white-space: nowrap;
+  }
+  .pgf-count strong { color: var(--hr); }
+
+  /* ── CONFIG ── */
+  .cfg { background: var(--s1); border: 1px solid var(--b1); border-radius: 10px; overflow: hidden; margin: 16px 0; }
+  .cfg-hdr {
+    padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; user-select: none;
+    font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600;
+  }
+  .cfg-hdr:hover { background: var(--s2); }
+  .cfg-body { display: none; padding: 16px; border-top: 1px solid var(--b1); gap: 12px; flex-wrap: wrap; }
+  .cfg-body.open { display: flex; }
+  .fld { flex: 1; min-width: 240px; }
+  .fld label { display: block; font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; margin-bottom: 6px; }
+  .fld input {
+    width: 100%; background: var(--bg); border: 1px solid var(--b2); border-radius: 5px;
+    padding: 8px 12px; font-size: 12px; color: var(--text); outline: none;
+    transition: border-color .2s; font-family: monospace;
+  }
+  .fld input:focus { border-color: var(--hr); }
+  .fld input::placeholder { color: var(--muted2); }
+  .fld-note { font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+  .fld-note a { color: var(--hr); text-decoration: none; }
+  .cfg-actions { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+
+  /* ── MAIN TABS ── */
+  .main-tabs {
+    display: flex; gap: 0; margin: 16px 0 0;
+    border-bottom: 2px solid var(--b1);
+  }
+  .main-tab {
+    padding: 10px 22px; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    cursor: pointer; color: var(--muted); border: none; background: transparent;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    transition: all .15s;
+  }
+  .main-tab:hover { color: var(--text); }
+  .main-tab.on { color: var(--hr); border-bottom-color: var(--hr); }
+  .main-tab .tab-count {
+    background: var(--hr-dim); color: var(--hr); font-size: 10px;
+    padding: 1px 6px; border-radius: 10px; margin-left: 6px;
+    font-family: 'Barlow', sans-serif; font-weight: 600;
+  }
+
+  /* ── LOGIC STRIP ── */
+  .logic {
+    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr;
+    background: var(--s1); border: 1px solid var(--b1); border-radius: 9px;
+    overflow: hidden; margin: 14px 0;
+  }
+  .ls { padding: 11px 14px; text-align: center; }
+  .ls-arrow { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; padding: 0 4px; }
+  .ls-num { font-size: 9px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+  .ls-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+  .ls-desc { font-size: 10px; color: var(--muted); line-height: 1.4; }
+  .ls-title.orange { color: var(--hr); }
+  .ls-title.blue { color: var(--cons); }
+  .ls-title.green { color: var(--green); }
+
+  /* ── BOOKS BANNER ── */
+  .books-banner {
+    background: var(--s1); border: 1px solid var(--b1); border-radius: 8px;
+    padding: 10px 15px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  }
+  .bbl { font-size: 9px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; white-space: nowrap; }
+  .bb-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .bbtag { font-size: 10px; padding: 2px 7px; border-radius: 3px; background: var(--cons-dim); border: 1px solid rgba(77,166,255,.18); color: var(--cons); font-weight: 500; }
+  .bbtag.hr { background: var(--hr-dim); border-color: rgba(139,92,246,.22); color: var(--hr); font-weight: 700; }
+  .bb-note { font-size: 10px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+
+  /* ── CONTROLS ── */
+  .ctrl-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 13px; }
+  .filter-tabs { display: flex; gap: 3px; }
+  .ftab {
+    padding: 5px 12px; border-radius: 5px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--b1); color: var(--muted);
+    background: transparent; transition: all .15s;
+  }
+  .ftab:hover { color: var(--text); border-color: var(--b2); }
+  .ftab.on { background: var(--hr-dim); border-color: rgba(139,92,246,.32); color: var(--hr); }
+  .gap { flex: 1; }
+  .ctrl { display: flex; align-items: center; gap: 6px; }
+  .ctrl-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; white-space: nowrap; }
+  input[type=range] { width: 80px; accent-color: var(--hr); cursor: pointer; }
+  .ctrl-v { font-size: 11px; color: var(--hr); min-width: 24px; font-weight: 600; }
+
+  /* ── STATS ── */
+  .stats { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-bottom: 16px; }
+  .stat { background: var(--s1); border: 1px solid var(--b1); border-radius: 8px; padding: 12px 14px; }
+  .stat-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
+  .stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -.5px; line-height: 1; }
+  .co { color: var(--hr); } .cg { color: var(--green); } .cy { color: var(--yellow); } .cb { color: var(--cons); } .cp { color: var(--purple); }
+
+  /* ── GAME CARDS ── */
+  .list { display: flex; flex-direction: column; gap: 9px; }
+  .list-hdr { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; font-weight: 600; padding-bottom: 9px; border-bottom: 1px solid var(--b1); margin-bottom: 2px; }
+
+  .gcard { background: var(--s1); border: 1px solid var(--b1); border-radius: 10px; overflow: hidden; animation: ri .2s ease; transition: border-color .15s; }
+  @keyframes ri { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+  .gcard:hover { border-color: var(--b2); }
+  .gcard.high { border-color: rgba(0,229,160,.28); box-shadow: 0 0 20px rgba(0,229,160,.04); }
+  .gcard.med { border-color: rgba(255,187,0,.22); }
+
+  .gtop { padding: 11px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--b1); flex-wrap: wrap; }
+  .ginfo { flex: 1; min-width: 160px; }
+  .gmatch { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; color: var(--white); letter-spacing: .3px; text-transform: uppercase; }
+  .gmeta { display: flex; gap: 7px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+  .tchip { font-size: 10px; padding: 2px 7px; border-radius: 3px; border: 1px solid; font-weight: 600; }
+  .tchip.hot { background: rgba(255,51,85,.08); border-color: rgba(255,51,85,.25); color: var(--red); }
+  .tchip.warm { background: rgba(255,187,0,.07); border-color: rgba(255,187,0,.22); color: var(--yellow); }
+  .tchip.cool { background: var(--s2); border-color: var(--b1); color: var(--muted); }
+  .mitem { font-size: 10px; color: var(--muted); font-weight: 500; }
+
+  .etag { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap; border: 1px solid; letter-spacing: .3px; }
+  .etag.high { background: rgba(0,229,160,.1); color: var(--green); border-color: rgba(0,229,160,.28); }
+  .etag.med { background: rgba(255,187,0,.08); color: var(--yellow); border-color: rgba(255,187,0,.22); }
+  .etag.low { background: var(--s2); color: var(--muted); border-color: var(--b1); }
+  .etag.none { background: var(--s2); color: var(--muted2); border-color: var(--b1); font-size: 10px; }
+
+  /* book breakdown */
+  .bkrow { padding: 8px 16px; border-bottom: 1px solid var(--b1); background: var(--s2); }
+  .bkrow-hdr { font-size: 9px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; margin-bottom: 6px; }
+  .bkrow-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .bkchip { font-size: 10px; padding: 2px 7px; border-radius: 3px; background: var(--s1); border: 1px solid var(--b2); color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+  .bkchip.hr-chip { background: var(--hr-dim); border-color: rgba(139,92,246,.28); color: var(--hr); font-weight: 700; }
+  .bkchip.val-chip { background: rgba(0,229,160,.07); border-color: rgba(0,229,160,.25); color: var(--green); font-weight: 700; }
+  .bkchip-odds { color: var(--text); font-weight: 600; }
+  .bk-consensus { margin-left: auto; font-size: 11px; color: var(--cons); font-weight: 600; }
+
+  /* alerts */
+  .val-alert {
+    margin: 0 16px 11px;
+    background: rgba(0,229,160,.06); border: 1px solid rgba(0,229,160,.16);
+    border-radius: 6px; padding: 9px 12px;
+    display: flex; gap: 8px; font-size: 12px; line-height: 1.6; color: #88aaa0;
+  }
+  .val-alert strong.o { color: var(--hr); }
+  .val-alert strong.b { color: var(--cons); }
+  .val-alert .hl { color: var(--green); font-weight: 700; font-family: monospace; }
+
+  /* odds cols */
+  .odds-grid { display: grid; grid-template-columns: 1fr 1fr; }
+  .ocol { padding: 11px 16px; }
+  .ocol:first-child { border-right: 1px solid var(--b1); }
+  .ocol-hdr { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 9px; display: flex; align-items: center; gap: 5px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .dot-o { background: var(--hr); } .dot-b { background: var(--cons); }
+
+  .trow { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--b1); }
+  .trow:last-child { border-bottom: none; }
+  .tname { font-size: 13px; font-weight: 600; }
+  .tright { display: flex; align-items: center; gap: 8px; }
+  .timp { font-size: 10px; color: var(--muted); width: 36px; text-align: right; font-family: monospace; }
+  .tamt { font-size: 14px; font-weight: 700; min-width: 50px; text-align: right; font-family: monospace; }
+  .tamt.pos { color: var(--green); } .tamt.neg { color: #4a6070; } .tamt.hr-val { color: var(--hr); }
+
+  /* bottom strip */
+  .gbot { background: var(--s2); border-top: 1px solid var(--b1); padding: 8px 16px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+  .gbi { display: flex; align-items: center; justify-content: space-between; }
+  .gbi-lbl { font-size: 9px; color: var(--muted); letter-spacing: .5px; font-weight: 600; }
+  .gbi-val { font-size: 11px; font-weight: 700; font-family: monospace; }
+  .gbi-val.pos { color: var(--green); } .gbi-val.neg { color: var(--red); } .gbi-val.flat { color: var(--muted); }
+
+  /* ── PROPS SECTION ── */
+  .props-loading { padding: 20px 16px; text-align: center; color: var(--muted); font-size: 12px; }
+  .props-spin { width: 20px; height: 20px; border: 2px solid var(--b2); border-top-color: var(--hr); border-radius: 50%; animation: sp .6s linear infinite; margin: 0 auto 8px; }
+  @keyframes sp { to{transform:rotate(360deg)} }
+
+  /* prop game section */
+  .prop-game-block { background: var(--s1); border: 1px solid var(--b1); border-radius: 10px; overflow: hidden; margin-bottom: 9px; animation: ri .2s ease; }
+  .prop-game-hdr { padding: 10px 16px; background: var(--s2); border-bottom: 1px solid var(--b1); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .prop-game-title { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 800; color: var(--white); text-transform: uppercase; letter-spacing: .5px; }
+  .prop-game-meta { font-size: 10px; color: var(--muted); display: flex; gap: 10px; align-items: center; }
+  .prop-game-summary { font-size: 11px; color: var(--hr); font-weight: 700; }
+
+
+  /* player prop rows */
+  .prop-rows { padding: 0 16px 12px; }
+  .prop-player-block { margin-top: 10px; }
+  .prop-player-name {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
+    color: var(--cons); text-transform: uppercase; letter-spacing: .5px;
+    padding: 6px 0 4px; border-bottom: 1px solid var(--b1); margin-bottom: 4px;
+  }
+
+  .prop-row {
+    display: grid; grid-template-columns: 120px 1fr 1fr 80px 80px 90px;
+    gap: 8px; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid rgba(22,32,48,.8);
+    font-size: 12px;
+  }
+  .prop-row:last-child { border-bottom: none; }
+  .prop-row.has-val { background: rgba(0,229,160,.03); border-radius: 4px; padding: 5px 4px; margin: 0 -4px; }
+
+  .prop-line { font-weight: 700; color: var(--white); }
+  .prop-side { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .prop-cons-odds { font-family: monospace; font-size: 12px; color: var(--cons); font-weight: 600; }
+  .prop-hr-odds { font-family: monospace; font-size: 12px; font-weight: 700; }
+  .prop-hr-odds.val { color: var(--green); }
+  .prop-hr-odds.no-val { color: var(--hr); }
+  .prop-hr-odds.missing { color: var(--muted2); font-style: italic; }
+  .prop-edge { font-family: monospace; font-size: 11px; font-weight: 700; text-align: right; }
+  .prop-edge.pos { color: var(--green); }
+  .prop-edge.neg { color: var(--muted); }
+  .prop-edge.strong { color: var(--green); font-size: 12px; }
+
+  .prop-row-hdr {
+    display: grid; grid-template-columns: 120px 1fr 1fr 80px 80px 90px;
+    gap: 8px; padding: 4px 0 6px;
+    font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-weight: 600;
+    border-bottom: 1px solid var(--b1); margin-bottom: 2px;
+  }
+
+  .prop-no-hr { font-size: 11px; color: var(--muted2); padding: 8px 0; font-style: italic; }
+
+  /* empty / loading */
+  .empty { background: var(--s1); border: 1px solid var(--b1); border-radius: 10px; padding: 48px 32px; text-align: center; }
+  .empty-ico { font-size: 40px; margin-bottom: 12px; }
+  .empty-ttl { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: var(--white); text-transform: uppercase; margin-bottom: 8px; }
+  .empty-dsc { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 420px; margin: 0 auto; }
+
+  .spin { width: 28px; height: 28px; border: 2px solid var(--b2); border-top-color: var(--hr); border-radius: 50%; animation: sp .7s linear infinite; margin: 0 auto 12px; }
+
+  .foot { text-align: center; font-size: 10px; color: var(--muted2); padding: 20px 0; letter-spacing: .5px; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
+
+  @media(max-width:700px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .odds-grid { grid-template-columns: 1fr; }
+    .ocol:first-child { border-right: none; border-bottom: 1px solid var(--b1); }
+    .gbot { grid-template-columns: 1fr 1fr; }
+    .logic { grid-template-columns: 1fr; }
+    .ls-arrow { display: none; }
+    .prop-row { grid-template-columns: 90px 1fr 1fr 60px 60px 70px; font-size: 11px; }
+    .prop-row-hdr { grid-template-columns: 90px 1fr 1fr 60px 60px 70px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="hdr">
+    <div class="brand">
+      <div class="brand-ball">🏀</div>
+      <div>
+        <div class="brand-name">NBA Edge Finder</div>
+        <div class="brand-sub">Consensus Anchor · Hard Rock Signal</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+        <span id="themeIcon">☀️</span>
+      </button>
+      <div class="badge badge-live" id="liveBadge"><div class="pulse"></div><span id="statusTxt">Ready</span></div>
+      <div class="badge badge-demo" id="demoBadge">DEMO</div>
+      <button class="xbtn" id="refreshBtn" onclick="fetchData()">↻ Refresh</button>
+    </div>
+  </header>
+
+  <!-- CONFIG -->
+  <div class="cfg">
+    <div class="cfg-hdr" onclick="toggleCfg()">
+      <span>⚙ &nbsp;API Configuration — One Odds API Key</span>
+      <span id="cfgArr">▼</span>
+    </div>
+    <div class="cfg-body" id="cfgBody">
+      <div class="fld">
+        <label>The Odds API Key</label>
+        <input type="password" id="oddsKey" placeholder="your-odds-api-key">
+        <div class="fld-note">
+          One key pulls all books + NBA player props.
+          Free tier at <a href="https://the-odds-api.com" target="_blank">the-odds-api.com →</a>
+          Note: props use <strong>1 credit per game</strong> fetched, in addition to 1 credit for the game list.
+        </div>
+      </div>
+      <div class="cfg-actions">
+        <button class="xbtn xbtn-fill" onclick="saveAndFetch()">LOAD LIVE DATA</button>
+        <button class="xbtn" onclick="loadDemo()">Demo Mode</button>
+        <button class="xbtn" onclick="runDiagnostic()" style="border-color:rgba(255,187,0,.4);color:var(--yellow);">🔍 Diagnose</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN TABS -->
+  <div class="main-tabs">
+    <button class="main-tab on" onclick="setMainTab('lines',this)">
+      Game Lines <span class="tab-count" id="linesCount">0</span>
+    </button>
+    <button class="main-tab" onclick="setMainTab('props',this)">
+      Player Props <span class="tab-count" id="propsCount">0</span>
+    </button>
+  </div>
+
+  <!-- GAME LINES VIEW -->
+  <div id="linesView">
+    <div class="logic">
+      <div class="ls">
+        <div class="ls-num">Step 1 · Anchor</div>
+        <div class="ls-title blue">Consensus (All Books)</div>
+        <div class="ls-desc">Strip vig from every book, average the true probabilities</div>
+      </div>
+      <div class="ls-arrow">→</div>
+      <div class="ls">
+        <div class="ls-num">Step 2 · Signal</div>
+        <div class="ls-title orange">Hard Rock Line</div>
+        <div class="ls-desc">Compare Hard Rock's true probability to the consensus</div>
+      </div>
+      <div class="ls-arrow">→</div>
+      <div class="ls">
+        <div class="ls-num">Step 3 · Action</div>
+        <div class="ls-title green">Bet Hard Rock</div>
+        <div class="ls-desc">When Hard Rock's implied prob is lower than consensus, bet Hard Rock</div>
+      </div>
+    </div>
+
+    <div class="books-banner">
+      <div class="bbl">Books</div>
+      <div class="bb-tags">
+        <span class="bbtag hr">Hard Rock ← Signal</span>
+        <span class="bbtag">DraftKings</span><span class="bbtag">FanDuel</span>
+        <span class="bbtag">BetMGM</span><span class="bbtag">Caesars</span>
+        <span class="bbtag">ESPN Bet</span><span class="bbtag">PointsBet</span>
+        <span class="bbtag">BetRivers</span><span class="bbtag">Unibet</span>
+        <span class="bbtag">Bet365</span><span class="bbtag">Fanatics</span><span class="bbtag">WynnBet</span>
+      </div>
+      <div class="bb-note">All others = Consensus</div>
+    </div>
+
+    <!-- Market type filter dropdown -->
+    <div class="prop-global-filter">
+      <span class="pgf-label">🎯 Market Type</span>
+      <select class="pgf-select" id="marketTypeSelect" onchange="setMarketType(this.value)">
+        <option value="all">All Markets</option>
+        <option value="h2h">Moneylines</option>
+        <option value="spreads">Spreads</option>
+        <option value="totals">Totals (O/U)</option>
+      </select>
+      <span class="pgf-count" id="marketTypeCount"><strong>—</strong> markets shown</span>
+    </div>
+
+    <div class="ctrl-bar">
+      <div class="filter-tabs">
+        <button class="ftab on" onclick="setLineTab('all',this)">All Games</button>
+        <button class="ftab" onclick="setLineTab('value',this)">HR Value Only</button>
+        <button class="ftab" onclick="setLineTab('high',this)">5%+ Value</button>
+      </div>
+      <div class="gap"></div>
+      <div class="ctrl">
+        <span class="ctrl-lbl">Min Value</span>
+        <input type="range" min="1" max="15" value="3" id="lineEdgeSlider" oninput="setLineEdge(this.value)">
+        <span class="ctrl-v" id="lineEdgeVal">3%</span>
+      </div>
+      <div class="ctrl">
+        <span class="ctrl-lbl">Min Books</span>
+        <input type="range" min="2" max="11" value="3" id="booksSlider" oninput="setMinBooks(this.value)">
+        <span class="ctrl-v" id="booksVal">3</span>
+      </div>
+    </div>
+
+    <div class="stats" style="grid-template-columns:repeat(6,1fr);">
+      <div class="stat"><div class="stat-lbl">Games</div><div class="stat-val co" id="sGames">—</div></div>
+      <div class="stat"><div class="stat-lbl">ML Edges</div><div class="stat-val cg" id="sMLEdges">—</div></div>
+      <div class="stat"><div class="stat-lbl">Spread Edges</div><div class="stat-val cg" id="sSpreadEdges">—</div></div>
+      <div class="stat"><div class="stat-lbl">Total Edges</div><div class="stat-val cg" id="sTotalEdges">—</div></div>
+      <div class="stat"><div class="stat-lbl">Best Value</div><div class="stat-val cy" id="sBest">—</div></div>
+      <div class="stat"><div class="stat-lbl">Avg Books</div><div class="stat-val cb" id="sBooks">—</div></div>
+    </div>
+
+    <div id="linesContent">
+      <div class="empty">
+        <div class="empty-ico">🏀</div>
+        <div class="empty-ttl">Ready to find edges</div>
+        <div class="empty-dsc">Enter your Odds API key and click Load Live Data, or use Demo Mode.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROPS VIEW -->
+  <div id="propsView" style="display:none;">
+    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:9px;padding:11px 15px;margin:14px 0;display:flex;align-items:flex-start;gap:10px;font-size:12px;line-height:1.6;color:var(--text);">
+      <span style="font-size:16px;flex-shrink:0;">💡</span>
+      <span>
+        Props use <strong style="color:var(--hr)">1 API credit per game</strong> fetched. With <span id="gamesForProps" style="color:var(--cons);font-weight:700;">—</span> games today that's
+        <span id="propsCredits" style="color:var(--yellow);font-weight:700;">—</span> additional credits on top of the 1 used for the game list.
+        Edge = Consensus no-vig prob − Hard Rock no-vig prob. Positive = Hard Rock is paying more → bet Hard Rock.
+      </span>
+    </div>
+
+    <!-- Global stat category dropdown -->
+    <div class="prop-global-filter">
+      <span class="pgf-label">📊 Filter by Stat</span>
+      <select class="pgf-select" id="globalStatSelect" onchange="setGlobalStat(this.value)">
+        <option value="all">All Categories</option>
+        <option value="player_points">Points</option>
+        <option value="player_rebounds">Rebounds</option>
+        <option value="player_assists">Assists</option>
+        <option value="player_threes">3-Pointers Made</option>
+        <option value="player_steals">Steals</option>
+        <option value="player_blocks">Blocks</option>
+        <option value="player_points_rebounds_assists">Pts + Reb + Ast</option>
+        <option value="player_points_rebounds">Pts + Reb</option>
+        <option value="player_points_assists">Pts + Ast</option>
+        <option value="player_rebounds_assists">Reb + Ast</option>
+        <option value="player_steals_blocks">Stl + Blk</option>
+      </select>
+      <span class="pgf-count" id="globalStatCount"><strong>—</strong> prop lines shown</span>
+    </div>
+
+    <div class="ctrl-bar">
+      <div class="filter-tabs">
+        <button class="ftab on" onclick="setPropTab('all',this)">All Props</button>
+        <button class="ftab" onclick="setPropTab('value',this)">HR Value Only</button>
+        <button class="ftab" onclick="setPropTab('high',this)">5%+ Value</button>
+      </div>
+      <div class="gap"></div>
+      <div class="ctrl">
+        <span class="ctrl-lbl">Min Value</span>
+        <input type="range" min="1" max="15" value="3" id="propEdgeSlider" oninput="setPropEdge(this.value)">
+        <span class="ctrl-v" id="propEdgeVal">3%</span>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-lbl">Games w/ Props</div><div class="stat-val co" id="pGames">—</div></div>
+      <div class="stat"><div class="stat-lbl">Players</div><div class="stat-val cb" id="pPlayers">—</div></div>
+      <div class="stat"><div class="stat-lbl">Prop Lines</div><div class="stat-val cp" id="pLines">—</div></div>
+      <div class="stat"><div class="stat-lbl">HR Value Bets</div><div class="stat-val cg" id="pEdges">—</div></div>
+      <div class="stat"><div class="stat-lbl">Best Prop Edge</div><div class="stat-val cy" id="pBest">—</div></div>
+    </div>
+
+    <div id="propsContent">
+      <div class="empty">
+        <div class="empty-ico">📊</div>
+        <div class="empty-ttl">Props load after game lines</div>
+        <div class="empty-dsc">Load live data on the Game Lines tab first, then come back here. Props are fetched per-game.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let games = [];         // processed game line data
+let propData = [];      // processed props data
+let rawGamesCache = []; // raw API response cached for lazy prop load
+let isDemo = true;
+let mainTab = 'lines';
+let lineTab = 'all';
+let propTab = 'all';
+let globalStatFilter = 'all'; // global prop stat category filter
+let marketTypeFilter = 'all'; // moneyline / spreads / totals
+let lineMinEdge = 3;
+let propMinEdge = 3;
+let minBooks = 3;
+
+const CONSENSUS_KEYS = [
+  'draftkings','fanduel','betmgm','caesars','espnbet',
+  'pointsbet','betrivers','unibet','wynnbet','bet365',
+  'fanatics','bovada','mybookieag','betonlineag'
+];
+const ALL_BOOK_KEYS = ['hardrock', ...CONSENSUS_KEYS];
+
+const BOOK_NAMES = {
+  hardrock:'Hard Rock', draftkings:'DraftKings', fanduel:'FanDuel',
+  betmgm:'BetMGM', caesars:'Caesars', espnbet:'ESPN Bet',
+  pointsbet:'PointsBet', betrivers:'BetRivers', unibet:'Unibet',
+  wynnbet:'WynnBet', bet365:'Bet365', fanatics:'Fanatics',
+  bovada:'Bovada', mybookieag:'MyBookie', betonlineag:'BetOnline'
+};
+
+// All prop market keys supported by The Odds API for NBA
+const PROP_MARKETS = [
+  { key: 'player_points',                   label: 'Points' },
+  { key: 'player_rebounds',                 label: 'Rebounds' },
+  { key: 'player_assists',                  label: 'Assists' },
+  { key: 'player_threes',                   label: '3-Pointers' },
+  { key: 'player_steals',                   label: 'Steals' },
+  { key: 'player_blocks',                   label: 'Blocks' },
+  { key: 'player_points_rebounds_assists',  label: 'Pts+Reb+Ast' },
+  { key: 'player_points_rebounds',          label: 'Pts+Reb' },
+  { key: 'player_points_assists',           label: 'Pts+Ast' },
+  { key: 'player_rebounds_assists',         label: 'Reb+Ast' },
+  { key: 'player_steals_blocks',            label: 'Stl+Blk' },
+];
+const PROP_MARKET_KEYS = PROP_MARKETS.map(m => m.key);
+const PROP_LABEL = Object.fromEntries(PROP_MARKETS.map(m => [m.key, m.label]));
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  toggleCfg();
+  const ok = localStorage.getItem('oddsKey');
+  if (ok) document.getElementById('oddsKey').value = ok;
+  loadDemo();
+});
+
+function toggleCfg() {
+  const b = document.getElementById('cfgBody');
+  const a = document.getElementById('cfgArr');
+  b.classList.toggle('open');
+  a.textContent = b.classList.contains('open') ? '▲' : '▼';
+}
+
+// ═══════════════════════════════════════
+// MATH
+// ═══════════════════════════════════════
+
+function noVig2(decA, decB) {
+  const rA = 1/decA, rB = 1/decB, ov = rA + rB;
+  return { a: (rA/ov)*100, b: (rB/ov)*100, vig: (ov-1)*100 };
+}
+
+function buildConsensus(bookOdds) {
+  if (!bookOdds.length) return null;
+  let sA=0, sH=0, sV=0;
+  const per = bookOdds.map(b => {
+    const nv = noVig2(b.awayDec, b.homeDec);
+    sA += nv.a; sH += nv.b; sV += nv.vig;
+    return { ...b, nvAway: nv.a, nvHome: nv.b, vig: nv.vig };
+  });
+  const n = bookOdds.length;
+  return { away: sA/n, home: sH/n, avgVig: sV/n, perBook: per, bookCount: n };
+}
+
+// For props: consensus over/under from multiple books
+function buildPropConsensus(bookLines) {
+  // bookLines: [{book, overDec, underDec, line}]
+  if (!bookLines.length) return null;
+  let sO=0, sU=0, sV=0, sumLine=0;
+  const per = bookLines.map(b => {
+    const nv = noVig2(b.overDec, b.underDec);
+    sO += nv.a; sU += nv.b; sV += nv.vig;
+    sumLine += b.line;
+    return { ...b, nvOver: nv.a, nvUnder: nv.b, vig: nv.vig };
+  });
+  const n = bookLines.length;
+  return { over: sO/n, under: sU/n, avgVig: sV/n, avgLine: sumLine/n, perBook: per, bookCount: n };
+}
+
+function decToAm(dec) {
+  if (dec >= 2) return '+' + Math.round((dec-1)*100);
+  return String(Math.round(-100/(dec-1)));
+}
+function probToAm(pct) { return decToAm(100/pct); }
+function fmtAm(v) { const n=parseInt(v); return n>0?'+'+n:String(n); }
+function edgeCalc(consProb, hrProb) { return consProb - hrProb; }
+
+// ═══════════════════════════════════════
+// PROCESS GAME LINES
+// ═══════════════════════════════════════
+
+function processGame(g) {
+  // ── MONEYLINE ──
+  const cs = g.consensusOdds && g.consensusOdds.length ? buildConsensus(g.consensusOdds) : null;
+  const hr = g.hardRockOdds ? noVig2(g.hardRockOdds.awayDec, g.hardRockOdds.homeDec) : null;
+  const hasHR = !!hr;
+
+  const awayEdge = (cs && hasHR) ? parseFloat(edgeCalc(cs.away, hr.a).toFixed(2)) : 0;
+  const homeEdge = (cs && hasHR) ? parseFloat(edgeCalc(cs.home, hr.b).toFixed(2)) : 0;
+  const mlBestEdge = parseFloat(Math.max(awayEdge, homeEdge).toFixed(2));
+
+  const csAwayAm = cs ? parseInt(probToAm(cs.away)) : null;
+  const csHomeAm = cs ? parseInt(probToAm(cs.home)) : null;
+  const hrRawAwayAm = hasHR ? parseInt(decToAm(g.hardRockOdds.awayDec)) : null;
+  const hrRawHomeAm = hasHR ? parseInt(decToAm(g.hardRockOdds.homeDec)) : null;
+
+  // ── SPREADS ──
+  // Find the most common spread point across consensus books, compute edge vs HR
+  const spreadEdges = [];
+  for (const [pt, consArr] of Object.entries(g.consSpreads || {})) {
+    if (consArr.length < 1) continue;
+    const csSpread = buildConsensus(consArr.map(b => ({ ...b, awayDec: b.awayDec, homeDec: b.homeDec })));
+    const hrSpread = g.hrSpreads?.[pt];
+    if (!csSpread) continue;
+    const hrSpreadNV = hrSpread ? noVig2(hrSpread.awayDec, hrSpread.homeDec) : null;
+    const awaySpreadEdge = hrSpreadNV ? parseFloat(edgeCalc(csSpread.away, hrSpreadNV.a).toFixed(2)) : 0;
+    const homeSpreadEdge = hrSpreadNV ? parseFloat(edgeCalc(csSpread.home, hrSpreadNV.b).toFixed(2)) : 0;
+    spreadEdges.push({
+      point: parseFloat(pt), csSpread, hrSpread: hrSpreadNV, hasHR: !!hrSpreadNV,
+      hrRaw: hrSpread,
+      awayEdge: awaySpreadEdge, homeEdge: homeSpreadEdge,
+      bestEdge: parseFloat(Math.max(awaySpreadEdge, homeSpreadEdge).toFixed(2)),
+      bookCount: consArr.length
+    });
+  }
+  // Best spread edge overall
+  const spreadBestEdge = spreadEdges.length ? Math.max(...spreadEdges.map(s=>s.bestEdge)) : 0;
+
+  // ── TOTALS ──
+  const totalEdges = [];
+  for (const [pt, consArr] of Object.entries(g.consTotals || {})) {
+    if (consArr.length < 1) continue;
+    const csTotal = buildPropConsensus(consArr.map(b => ({ ...b, overDec: b.overDec, underDec: b.underDec, line: b.point })));
+    const hrTotal = g.hrTotals?.[pt];
+    if (!csTotal) continue;
+    const hrTotalNV = hrTotal ? noVig2(hrTotal.overDec, hrTotal.underDec) : null;
+    const overEdge  = hrTotalNV ? parseFloat(edgeCalc(csTotal.over,  hrTotalNV.a).toFixed(2)) : 0;
+    const underEdge = hrTotalNV ? parseFloat(edgeCalc(csTotal.under, hrTotalNV.b).toFixed(2)) : 0;
+    totalEdges.push({
+      point: parseFloat(pt), csTotal, hrTotal: hrTotalNV, hasHR: !!hrTotalNV,
+      hrRaw: hrTotal,
+      overEdge, underEdge,
+      bestEdge: parseFloat(Math.max(overEdge, underEdge).toFixed(2)),
+      bookCount: consArr.length
+    });
+  }
+  const totalBestEdge = totalEdges.length ? Math.max(...totalEdges.map(t=>t.bestEdge)) : 0;
+
+  // ── OVERALL BEST ──
+  const bestEdge = parseFloat(Math.max(mlBestEdge, spreadBestEdge, totalBestEdge).toFixed(2));
+
+  const hoursToGame = (new Date(g.time) - Date.now()) / 3600000;
+  return {
+    ...g, cs, hr, hasHR,
+    awayEdge, homeEdge, mlBestEdge, bestEdge,
+    csAwayAm, csHomeAm, hrRawAwayAm, hrRawHomeAm,
+    spreadEdges, spreadBestEdge,
+    totalEdges, totalBestEdge,
+    hoursToGame
+  };
+}
+
+// ═══════════════════════════════════════
+// PROCESS PROPS
+// ═══════════════════════════════════════
+
+function processProps(gameId, away, home, time, rawMarkets) {
+  // rawMarkets: flat array of individual outcome objects, each with:
+  // { key (market), bookmaker, description (player name), name (Over/Under), price (decimal), point (line) }
+  // Group by player → stat category → line value → side → book
+  const players = {};
+
+  for (const outcome of rawMarkets) {
+    const statKey = outcome.key;
+    if (!PROP_MARKET_KEYS.includes(statKey)) continue;
+
+    const player = outcome.description;           // player name e.g. "LeBron James"
+    const side = outcome.name;                    // "Over" or "Under"
+    const line = outcome.point;                   // e.g. 25.5
+    const dec = outcome.price;                    // decimal odds e.g. 1.91
+    const book = outcome.bookmaker;               // e.g. "draftkings"
+
+    if (!player || !side || line == null || !dec || !book) continue;
+
+    if (!players[player]) players[player] = {};
+    if (!players[player][statKey]) players[player][statKey] = {};
+    const lineKey = String(line);
+    if (!players[player][statKey][lineKey]) players[player][statKey][lineKey] = { line, over: {}, under: {} };
+    const sideKey = side.toLowerCase().includes('over') ? 'over' : 'under';
+    players[player][statKey][lineKey][sideKey][book] = dec;
+  }
+
+  // Now compute consensus vs Hard Rock for each player/stat/line/side
+  const result = [];
+  for (const [playerName, stats] of Object.entries(players)) {
+    for (const [statKey, lines] of Object.entries(stats)) {
+      for (const [lineVal, sides] of Object.entries(lines)) {
+        const line = sides.line;
+
+        // Get books for over and under
+        const overBooks = sides.over;
+        const underBooks = sides.under;
+
+        // Need at least one book with both over AND under to do no-vig calc
+        // Find common books
+        const allBooks = new Set([...Object.keys(overBooks), ...Object.keys(underBooks)]);
+        if (allBooks.size < 1) continue;
+
+        // Build per-book no-vig lines (only books that have BOTH over and under)
+        const consBooks = [];
+        let hrOverDec = null, hrUnderDec = null;
+
+        for (const book of allBooks) {
+          const oDec = overBooks[book];
+          const uDec = underBooks[book];
+          if (!oDec || !uDec) continue;
+
+          if (book === 'hardrock') {
+            hrOverDec = oDec;
+            hrUnderDec = uDec;
+          } else {
+            consBooks.push({ book, overDec: oDec, underDec: uDec, line });
+          }
+        }
+
+        if (consBooks.length < 1) continue;
+
+        // Consensus
+        const cs = buildPropConsensus(consBooks);
+        if (!cs) continue;
+
+        const hasHR = hrOverDec && hrUnderDec;
+        let hrOver = null, hrUnder = null;
+        let overEdge = 0, underEdge = 0;
+
+        if (hasHR) {
+          const hrNV = noVig2(hrOverDec, hrUnderDec);
+          hrOver = hrNV.a;
+          hrUnder = hrNV.b;
+          overEdge = parseFloat(edgeCalc(cs.over, hrOver).toFixed(2));
+          underEdge = parseFloat(edgeCalc(cs.under, hrUnder).toFixed(2));
+        }
+
+        const bestEdge = parseFloat(Math.max(overEdge, underEdge).toFixed(2));
+
+        result.push({
+          gameId, away, home, time,
+          player: playerName,
+          statKey,
+          statLabel: PROP_LABEL[statKey] || statKey,
+          line,
+          cs,
+          hasHR,
+          hrOverDec, hrUnderDec,
+          hrOver, hrUnder,
+          overEdge, underEdge, bestEdge,
+          consBooks: consBooks.length
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
+// ═══════════════════════════════════════
+// DEMO DATA
+// ═══════════════════════════════════════
+
+function getDemoGames() {
+  const now = Date.now();
+  return [
+    {
+      id:'nba1', away:'Los Angeles Lakers', home:'Boston Celtics',
+      time: new Date(now + 3*3600000).toISOString(),
+      hardRockOdds: { awayDec: 2.10, homeDec: 1.78 },
+      consensusOdds: [
+        {key:'draftkings', name:'DraftKings', awayDec:1.91, homeDec:1.99},
+        {key:'fanduel',    name:'FanDuel',    awayDec:1.93, homeDec:1.97},
+        {key:'betmgm',     name:'BetMGM',     awayDec:1.90, homeDec:2.00},
+        {key:'caesars',    name:'Caesars',    awayDec:1.92, homeDec:1.98},
+        {key:'espnbet',    name:'ESPN Bet',   awayDec:1.91, homeDec:1.99},
+        {key:'betrivers',  name:'BetRivers',  awayDec:1.93, homeDec:1.97},
+      ],
+      // Spreads: Celtics -3.5 favored. HR is softer on Lakers +3.5 — value on Lakers spread
+      hrSpreads: { '-3.5': { point:-3.5, awayDec:2.20, homeDec:1.71 } },
+      consSpreads: { '-3.5': [
+        {key:'draftkings', name:'DraftKings', point:-3.5, awayDec:1.91, homeDec:1.99},
+        {key:'fanduel',    name:'FanDuel',    point:-3.5, awayDec:1.90, homeDec:2.00},
+        {key:'betmgm',     name:'BetMGM',     point:-3.5, awayDec:1.92, homeDec:1.98},
+        {key:'caesars',    name:'Caesars',    point:-3.5, awayDec:1.91, homeDec:1.99},
+      ]},
+      // Totals: consensus 224.5. HR has it softer on the Over
+      hrTotals: { '224.5': { point:224.5, overDec:2.15, underDec:1.75 } },
+      consTotals: { '224.5': [
+        {key:'draftkings', name:'DraftKings', point:224.5, overDec:1.91, underDec:1.99},
+        {key:'fanduel',    name:'FanDuel',    point:224.5, overDec:1.90, underDec:2.00},
+        {key:'betmgm',     name:'BetMGM',     point:224.5, overDec:1.92, underDec:1.98},
+        {key:'caesars',    name:'Caesars',    point:224.5, overDec:1.91, underDec:1.99},
+        {key:'espnbet',    name:'ESPN Bet',   point:224.5, overDec:1.89, underDec:2.01},
+      ]},
+    },
+    {
+      id:'nba2', away:'Golden State Warriors', home:'Miami Heat',
+      time: new Date(now + 4*3600000).toISOString(),
+      hardRockOdds: { awayDec: 1.65, homeDec: 2.40 },
+      consensusOdds: [
+        {key:'draftkings', name:'DraftKings', awayDec:1.70, homeDec:2.25},
+        {key:'fanduel',    name:'FanDuel',    awayDec:1.72, homeDec:2.22},
+        {key:'betmgm',     name:'BetMGM',     awayDec:1.69, homeDec:2.28},
+        {key:'caesars',    name:'Caesars',    awayDec:1.71, homeDec:2.24},
+        {key:'espnbet',    name:'ESPN Bet',   awayDec:1.70, homeDec:2.26},
+      ],
+      hrSpreads: { '5.5': { point:5.5, awayDec:2.05, homeDec:1.85 } },
+      consSpreads: { '5.5': [
+        {key:'draftkings', name:'DraftKings', point:5.5, awayDec:1.91, homeDec:1.99},
+        {key:'fanduel',    name:'FanDuel',    point:5.5, awayDec:1.90, homeDec:2.00},
+        {key:'betmgm',     name:'BetMGM',     point:5.5, awayDec:1.92, homeDec:1.98},
+      ]},
+      hrTotals: { '218.5': { point:218.5, overDec:1.91, underDec:1.99 } },
+      consTotals: { '218.5': [
+        {key:'draftkings', name:'DraftKings', point:218.5, overDec:1.90, underDec:2.00},
+        {key:'fanduel',    name:'FanDuel',    point:218.5, overDec:1.91, underDec:1.99},
+        {key:'betmgm',     name:'BetMGM',     point:218.5, overDec:1.89, underDec:2.01},
+      ]},
+    },
+    {
+      id:'nba3', away:'Denver Nuggets', home:'Phoenix Suns',
+      time: new Date(now + 5*3600000).toISOString(),
+      hardRockOdds: null,
+      consensusOdds: [
+        {key:'draftkings', name:'DraftKings', awayDec:1.60, homeDec:2.50},
+        {key:'fanduel',    name:'FanDuel',    awayDec:1.62, homeDec:2.46},
+        {key:'betmgm',     name:'BetMGM',     awayDec:1.59, homeDec:2.54},
+      ],
+    },
+    {
+      id:'nba4', away:'Oklahoma City Thunder', home:'Milwaukee Bucks',
+      time: new Date(now + 6*3600000).toISOString(),
+      hardRockOdds: { awayDec: 1.55, homeDec: 2.70 },
+      consensusOdds: [
+        {key:'draftkings', name:'DraftKings', awayDec:1.50, homeDec:2.80},
+        {key:'fanduel',    name:'FanDuel',    awayDec:1.52, homeDec:2.76},
+        {key:'betmgm',     name:'BetMGM',     awayDec:1.49, homeDec:2.84},
+        {key:'caesars',    name:'Caesars',    awayDec:1.51, homeDec:2.78},
+        {key:'espnbet',    name:'ESPN Bet',   awayDec:1.50, homeDec:2.80},
+        {key:'betrivers',  name:'BetRivers',  awayDec:1.51, homeDec:2.77},
+        {key:'unibet',     name:'Unibet',     awayDec:1.50, homeDec:2.80},
+      ],
+      // HR significantly longer on Under — big total edge
+      hrSpreads: { '-8.5': { point:-8.5, awayDec:1.91, homeDec:1.99 } },
+      consSpreads: { '-8.5': [
+        {key:'draftkings', name:'DraftKings', point:-8.5, awayDec:1.91, homeDec:1.99},
+        {key:'fanduel',    name:'FanDuel',    point:-8.5, awayDec:1.90, homeDec:2.00},
+        {key:'betmgm',     name:'BetMGM',     point:-8.5, awayDec:1.92, homeDec:1.98},
+        {key:'caesars',    name:'Caesars',    point:-8.5, awayDec:1.91, homeDec:1.99},
+      ]},
+      hrTotals: { '226.5': { point:226.5, overDec:1.99, underDec:1.91 } },
+      consTotals: { '226.5': [
+        {key:'draftkings', name:'DraftKings', point:226.5, overDec:1.87, underDec:2.03},
+        {key:'fanduel',    name:'FanDuel',    point:226.5, overDec:1.86, underDec:2.04},
+        {key:'betmgm',     name:'BetMGM',     point:226.5, overDec:1.88, underDec:2.02},
+        {key:'caesars',    name:'Caesars',    point:226.5, overDec:1.87, underDec:2.03},
+        {key:'espnbet',    name:'ESPN Bet',   point:226.5, overDec:1.86, underDec:2.04},
+        {key:'betrivers',  name:'BetRivers',  point:226.5, overDec:1.88, underDec:2.02},
+      ]},
+    },
+  ];
+}
+
+function getDemoProps() {
+  // Realistic demo prop data for Lakers vs Celtics
+  return [
+    {
+      gameId:'nba1', away:'Los Angeles Lakers', home:'Boston Celtics',
+      time: new Date(Date.now() + 3*3600000).toISOString(),
+      player:'LeBron James', statKey:'player_points', statLabel:'Points', line:25.5,
+      cs: buildPropConsensus([
+        {book:'draftkings', overDec:1.91, underDec:1.99, line:25.5},
+        {book:'fanduel',    overDec:1.89, underDec:2.01, line:25.5},
+        {book:'betmgm',     overDec:1.90, underDec:2.00, line:25.5},
+        {book:'caesars',    overDec:1.92, underDec:1.98, line:25.5},
+      ]),
+      hasHR:true, hrOverDec:2.15, hrUnderDec:1.75,
+      hrOver: noVig2(2.15,1.75).a, hrUnder: noVig2(2.15,1.75).b,
+      overEdge: parseFloat((noVig2(1.91,1.99).a*4/4 - noVig2(2.15,1.75).a).toFixed(2)),
+      underEdge: 0, consBooks:4,
+    },
+    {
+      gameId:'nba1', away:'Los Angeles Lakers', home:'Boston Celtics',
+      time: new Date(Date.now() + 3*3600000).toISOString(),
+      player:'LeBron James', statKey:'player_points_rebounds_assists', statLabel:'Pts+Reb+Ast', line:42.5,
+      cs: buildPropConsensus([
+        {book:'draftkings', overDec:1.87, underDec:2.03, line:42.5},
+        {book:'fanduel',    overDec:1.86, underDec:2.04, line:42.5},
+        {book:'betmgm',     overDec:1.88, underDec:2.02, line:42.5},
+      ]),
+      hasHR:true, hrOverDec:2.20, hrUnderDec:1.72,
+      hrOver: noVig2(2.20,1.72).a, hrUnder: noVig2(2.20,1.72).b,
+      overEdge: 6.2, underEdge: 0, consBooks:3,
+    },
+    {
+      gameId:'nba1', away:'Los Angeles Lakers', home:'Boston Celtics',
+      time: new Date(Date.now() + 3*3600000).toISOString(),
+      player:'Jayson Tatum', statKey:'player_points', statLabel:'Points', line:28.5,
+      cs: buildPropConsensus([
+        {book:'draftkings', overDec:1.91, underDec:1.99, line:28.5},
+        {book:'fanduel',    overDec:1.90, underDec:2.00, line:28.5},
+        {book:'caesars',    overDec:1.92, underDec:1.98, line:28.5},
+        {book:'betmgm',     overDec:1.91, underDec:1.99, line:28.5},
+        {book:'espnbet',    overDec:1.89, underDec:2.01, line:28.5},
+      ]),
+      hasHR:true, hrOverDec:1.91, hrUnderDec:1.99,
+      hrOver: noVig2(1.91,1.99).a, hrUnder: noVig2(1.91,1.99).b,
+      overEdge: 0.3, underEdge: -0.1, consBooks:5,
+    },
+    {
+      gameId:'nba1', away:'Los Angeles Lakers', home:'Boston Celtics',
+      time: new Date(Date.now() + 3*3600000).toISOString(),
+      player:'Jayson Tatum', statKey:'player_rebounds', statLabel:'Rebounds', line:8.5,
+      cs: buildPropConsensus([
+        {book:'draftkings', overDec:1.87, underDec:2.03, line:8.5},
+        {book:'fanduel',    overDec:1.88, underDec:2.02, line:8.5},
+        {book:'caesars',    overDec:1.86, underDec:2.04, line:8.5},
+      ]),
+      hasHR:true, hrOverDec:2.10, hrUnderDec:1.80,
+      hrOver: noVig2(2.10,1.80).a, hrUnder: noVig2(2.10,1.80).b,
+      overEdge: 4.8, underEdge: 0, consBooks:3,
+    },
+    {
+      gameId:'nba1', away:'Los Angeles Lakers', home:'Boston Celtics',
+      time: new Date(Date.now() + 3*3600000).toISOString(),
+      player:'Jaylen Brown', statKey:'player_threes', statLabel:'3-Pointers', line:2.5,
+      cs: buildPropConsensus([
+        {book:'draftkings', overDec:2.00, underDec:1.90, line:2.5},
+        {book:'fanduel',    overDec:1.98, underDec:1.92, line:2.5},
+        {book:'betmgm',     overDec:2.01, underDec:1.89, line:2.5},
+        {book:'caesars',    overDec:1.99, underDec:1.91, line:2.5},
+      ]),
+      hasHR:false, hrOverDec:null, hrUnderDec:null,
+      hrOver:null, hrUnder:null,
+      overEdge:0, underEdge:0, consBooks:4,
+    },
+    {
+      gameId:'nba2', away:'Golden State Warriors', home:'Miami Heat',
+      time: new Date(Date.now() + 4*3600000).toISOString(),
+      player:'Stephen Curry', statKey:'player_points', statLabel:'Points', line:29.5,
+      cs: buildPropConsensus([
+        {book:'draftkings', overDec:1.91, underDec:1.99, line:29.5},
+        {book:'fanduel',    overDec:1.93, underDec:1.97, line:29.5},
+        {book:'betmgm',     overDec:1.90, underDec:2.00, line:29.5},
+      ]),
+      hasHR:true, hrOverDec:2.05, hrUnderDec:1.85,
+      hrOver: noVig2(2.05,1.85).a, hrUnder: noVig2(2.05,1.85).b,
+      overEdge: 3.7, underEdge:0, consBooks:3,
+    },
+    {
+      gameId:'nba2', away:'Golden State Warriors', home:'Miami Heat',
+      time: new Date(Date.now() + 4*3600000).toISOString(),
+      player:'Stephen Curry', statKey:'player_threes', statLabel:'3-Pointers', line:4.5,
+      cs: buildPropConsensus([
+        {book:'draftkings', overDec:1.85, underDec:2.05, line:4.5},
+        {book:'fanduel',    overDec:1.83, underDec:2.07, line:4.5},
+        {book:'caesars',    overDec:1.84, underDec:2.06, line:4.5},
+        {book:'betmgm',     overDec:1.86, underDec:2.04, line:4.5},
+      ]),
+      hasHR:true, hrOverDec:2.10, hrUnderDec:1.80,
+      hrOver: noVig2(2.10,1.80).a, hrUnder: noVig2(2.10,1.80).b,
+      overEdge: 7.1, underEdge:0, consBooks:4,
+    },
+  ].map(p => ({ ...p, bestEdge: Math.max(p.overEdge, p.underEdge) }));
+}
+
+function loadDemo() {
+  isDemo = true;
+  document.getElementById('demoBadge').style.display = '';
+  games = getDemoGames().map(processGame);
+  propData = getDemoProps();
+  renderLines();
+  renderProps();
+  updateLineStats();
+  updatePropStats();
+  updateTabCounts();
+}
+
+// ═══════════════════════════════════════
+// LIVE FETCH
+// ═══════════════════════════════════════
+
+async function saveAndFetch() {
+  const ok = document.getElementById('oddsKey').value.trim();
+  if (!ok) { alert('Enter your Odds API key, or use Demo Mode.'); return; }
+  localStorage.setItem('oddsKey', ok);
+  fetchData();
+}
+
+async function fetchData() {
+  const ok = document.getElementById('oddsKey').value.trim() || localStorage.getItem('oddsKey');
+  if (!ok) { loadDemo(); return; }
+
+  isDemo = false;
+  document.getElementById('demoBadge').style.display = 'none';
+  setLoading(true);
+
+  try {
+    // Step 1: fetch game lines
+    const gamesRaw = await fetchOdds(ok);
+    rawGamesCache = gamesRaw; // cache for lazy prop load
+    games = buildGames(gamesRaw).map(processGame);
+    updateLineStats();
+    updateTabCounts();
+    renderLines();
+
+    // Step 2: fetch props per game (1 credit each)
+    const gameCount = games.length;
+    const propCreditCost = gameCount * PROP_MARKET_KEYS.length;
+    document.getElementById('gamesForProps').textContent = gameCount;
+    document.getElementById('propsCredits').textContent = propCreditCost;
+
+    if (mainTab === 'props') {
+      await fetchAllProps(ok, gamesRaw);
+    } else {
+      // Lazy load — fetch props when user switches to props tab
+      document.getElementById('propsContent').innerHTML = `
+        <div class="empty">
+          <div class="empty-ico">📊</div>
+          <div class="empty-ttl">Props Ready to Load</div>
+          <div class="empty-dsc">Switch to the Player Props tab to load ${gameCount} game${gameCount!==1?'s':''} worth of props (${gameCount} API credits).</div>
+        </div>`;
+    }
+
+    document.getElementById('foot').textContent =
+      'Last updated ' + new Date().toLocaleTimeString() + ' · Auto-refreshes every 5 min';
+
+  } catch(e) {
+    showError(e.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function fetchOdds(apiKey) {
+  const books = ALL_BOOK_KEYS.join(',');
+  const url = 'https://api.the-odds-api.com/v4/sports/basketball_nba/odds/'
+    + '?apiKey=' + apiKey
+    + '&regions=us&markets=h2h,spreads,totals&oddsFormat=decimal&bookmakers=' + books;
+
+  let r;
+  try { r = await fetch(url); }
+  catch(e) { throw new Error('Network error — check your connection or hosting setup.'); }
+
+  if (r.status === 401) throw new Error('Invalid API key (401) — check your key at the-odds-api.com');
+  if (r.status === 429) throw new Error('Rate limit (429) — free tier requests exhausted for this month.');
+  if (!r.ok) throw new Error('Odds API error ' + r.status);
+
+  const data = await r.json();
+  const rem = r.headers.get('x-requests-remaining');
+  const used = r.headers.get('x-requests-used');
+  if (rem !== null) {
+    document.getElementById('foot').textContent =
+      'Last updated ' + new Date().toLocaleTimeString() + '  ·  API credits: ' + used + ' used, ' + rem + ' remaining';
+  }
+  return data;
+}
+
+async function fetchAllProps(apiKey, gamesRaw) {
+  const total = gamesRaw.length;
+  let done = 0;
+
+  const updateProgress = () => {
+    document.getElementById('propsContent').innerHTML =
+      `<div class="empty"><div class="spin"></div>
+       <div class="empty-ttl">Loading props... ${done}/${total}</div>
+       <div class="empty-dsc">Fetching ${total} game${total!==1?'s':''} — each game costs ${PROP_MARKET_KEYS.length} API credits (1 per stat category).</div>
+       <div style="margin-top:16px;background:var(--b1);border-radius:4px;height:4px;width:100%;max-width:300px;margin-left:auto;margin-right:auto;">
+         <div style="background:var(--hr);height:4px;border-radius:4px;width:${Math.round((done/total)*100)}%;transition:width .3s;"></div>
+       </div></div>`;
+  };
+  updateProgress();
+
+  const allProps = [];
+  const markets = PROP_MARKET_KEYS.join(',');
+  const books = ALL_BOOK_KEYS.join(',');
+
+  for (const game of gamesRaw) {
+    try {
+      const url = 'https://api.the-odds-api.com/v4/sports/basketball_nba/events/' + game.id + '/odds'
+        + '?apiKey=' + apiKey
+        + '&regions=us&markets=' + markets
+        + '&oddsFormat=decimal&bookmakers=' + books;
+
+      const r = await fetch(url);
+      done++;
+      updateProgress();
+
+      if (r.status === 401) { showError('Invalid API key (401)'); return; }
+      if (r.status === 429) { showError('Rate limit hit (429) — out of free credits for this month.'); return; }
+      if (!r.ok) { console.warn('Props fetch ' + r.status + ' for game ' + game.id); continue; }
+
+      const data = await r.json();
+
+      // Update credit display from headers
+      const rem = r.headers.get('x-requests-remaining');
+      const used = r.headers.get('x-requests-used');
+      if (rem !== null) {
+        document.getElementById('foot').textContent =
+          'Props loading... ' + done + '/' + total + '  ·  Credits used: ' + used + '  ·  Remaining: ' + rem;
+      }
+
+      // Parse: data.bookmakers[].markets[].outcomes[]
+      // Each outcome has: description (player name), name (Over/Under), price (decimal), point (line)
+      const rawMarkets = [];
+      for (const bm of (data.bookmakers || [])) {
+        for (const mkt of (bm.markets || [])) {
+          for (const outcome of (mkt.outcomes || [])) {
+            rawMarkets.push({
+              key: mkt.key,
+              bookmaker: bm.key,
+              description: outcome.description,  // player name
+              name: outcome.name,                 // "Over" or "Under"
+              price: outcome.price,               // decimal odds
+              point: outcome.point                // the line (e.g. 25.5)
+            });
+          }
+        }
+      }
+
+      const processed = processProps(game.id, game.away_team, game.home_team, game.commence_time, rawMarkets);
+      allProps.push(...processed);
+
+      // Brief pause between requests
+      await new Promise(res => setTimeout(res, 150));
+    } catch(e) {
+      done++;
+      updateProgress();
+      console.warn('Props fetch failed for', game.id, e.message);
+    }
+  }
+
+  propData = allProps;
+
+  // Reset global filter count display
+  const gcEl = document.getElementById('globalStatCount');
+  if (gcEl) gcEl.innerHTML = '<strong>' + propData.length + '</strong> prop lines shown';
+
+  if (propData.length === 0) {
+    document.getElementById('propsContent').innerHTML =
+      `<div class="empty">
+        <div class="empty-ico">⚠️</div>
+        <div class="empty-ttl">No prop data returned</div>
+        <div class="empty-dsc">
+          The API returned no player props for today's games. This can happen when:<br><br>
+          • Props haven't been posted yet (usually available ~2 hours before tip-off)<br>
+          • Hard Rock or other books haven't set prop lines yet<br>
+          • The NBA season is between games<br><br>
+          Try again closer to game time, or check your API credits at the-odds-api.com.
+        </div>
+      </div>`;
+    return;
+  }
+
+  renderProps();
+  updatePropStats();
+  updateTabCounts();
+}
+
+function buildGames(raw) {
+  return raw.map(g => {
+    const away = g.away_team, home = g.home_team;
+
+    // ── MONEYLINE ──
+    let hrML = null;
+    const consML = [];
+
+    // ── SPREADS ──
+    // Each book may have a slightly different spread number — we group by point
+    const hrSpreads = {};   // point → {awayDec, homeDec}
+    const consSpreads = {}; // point → [{book, awayDec, homeDec}]
+
+    // ── TOTALS ──
+    const hrTotals = {};    // point → {overDec, underDec}
+    const consTotals = {};  // point → [{book, overDec, underDec}]
+
+    for (const bm of (g.bookmakers || [])) {
+      const isHR = bm.key === 'hardrock';
+      const bmName = BOOK_NAMES[bm.key] || bm.title;
+
+      // Moneyline
+      const h2h = bm.markets?.find(m => m.key === 'h2h');
+      if (h2h) {
+        const awayDec = h2h.outcomes.find(o => o.name === away)?.price;
+        const homeDec = h2h.outcomes.find(o => o.name === home)?.price;
+        if (awayDec && homeDec) {
+          if (isHR) hrML = { awayDec, homeDec };
+          else consML.push({ key: bm.key, name: bmName, awayDec, homeDec });
+        }
+      }
+
+      // Spreads
+      const spreads = bm.markets?.find(m => m.key === 'spreads');
+      if (spreads) {
+        const awayOut = spreads.outcomes.find(o => o.name === away);
+        const homeOut = spreads.outcomes.find(o => o.name === home);
+        if (awayOut && homeOut) {
+          // Use away team's point as the key (e.g. -3.5)
+          const pt = awayOut.point;
+          const key = String(pt);
+          if (isHR) {
+            hrSpreads[key] = { point: pt, awayDec: awayOut.price, homeDec: homeOut.price };
+          } else {
+            if (!consSpreads[key]) consSpreads[key] = [];
+            consSpreads[key].push({ key: bm.key, name: bmName, point: pt, awayDec: awayOut.price, homeDec: homeOut.price });
+          }
+        }
+      }
+
+      // Totals
+      const totals = bm.markets?.find(m => m.key === 'totals');
+      if (totals) {
+        const overOut  = totals.outcomes.find(o => o.name === 'Over');
+        const underOut = totals.outcomes.find(o => o.name === 'Under');
+        if (overOut && underOut) {
+          const pt = overOut.point;
+          const key = String(pt);
+          if (isHR) {
+            hrTotals[key] = { point: pt, overDec: overOut.price, underDec: underOut.price };
+          } else {
+            if (!consTotals[key]) consTotals[key] = [];
+            consTotals[key].push({ key: bm.key, name: bmName, point: pt, overDec: overOut.price, underDec: underOut.price });
+          }
+        }
+      }
+    }
+
+    if (consML.length < 1 && Object.keys(consSpreads).length < 1 && Object.keys(consTotals).length < 1) return null;
+
+    return {
+      id: g.id, away, home, time: g.commence_time,
+      // ML
+      hardRockOdds: hrML, consensusOdds: consML,
+      // Spreads
+      hrSpreads, consSpreads,
+      // Totals
+      hrTotals, consTotals
+    };
+  }).filter(Boolean);
+}
+
+// ═══════════════════════════════════════
+// RENDER — GAME LINES
+// ═══════════════════════════════════════
+
+function updateLineStats() {
+  const valid = games.filter(g => g.cs && g.cs.bookCount >= minBooks);
+  const mlEdges = valid.filter(g => g.hasHR && g.mlBestEdge >= lineMinEdge).length;
+  const spreadEdges = valid.filter(g => g.spreadEdges?.some(s => s.hasHR && s.bestEdge >= lineMinEdge)).length;
+  const totalEdges = valid.filter(g => g.totalEdges?.some(t => t.hasHR && t.bestEdge >= lineMinEdge)).length;
+  const best = valid.length ? Math.max(...valid.map(g=>g.bestEdge||0)) : 0;
+  const avgB = valid.length ? (valid.reduce((s,g)=>s+(g.cs?.bookCount||0),0)/valid.length).toFixed(1) : '—';
+
+  document.getElementById('sGames').textContent = games.length;
+  document.getElementById('sMLEdges').textContent = mlEdges;
+  document.getElementById('sSpreadEdges').textContent = spreadEdges;
+  document.getElementById('sTotalEdges').textContent = totalEdges;
+  document.getElementById('sBest').textContent = best > 0 ? '+'+best.toFixed(1)+'%' : '—';
+  document.getElementById('sBooks').textContent = avgB;
+
+  // update market type count
+  const mtEl = document.getElementById('marketTypeCount');
+  if (mtEl) {
+    const shown = filteredMarkets().length;
+    mtEl.innerHTML = '<strong>' + shown + '</strong> market' + (shown !== 1 ? 's' : '') + ' shown';
+  }
+}
+
+function updatePropStats() {
+  const all = propData;
+  const games2 = new Set(all.map(p=>p.gameId)).size;
+  const players = new Set(all.map(p=>p.player+p.gameId)).size;
+  const edges = all.filter(p => p.hasHR && p.bestEdge >= propMinEdge);
+  const best = all.filter(p=>p.hasHR).length ? Math.max(...all.filter(p=>p.hasHR).map(p=>p.bestEdge)) : 0;
+
+  document.getElementById('pGames').textContent = games2;
+  document.getElementById('pPlayers').textContent = players;
+  document.getElementById('pLines').textContent = all.length;
+  document.getElementById('pEdges').textContent = edges.length;
+  document.getElementById('pBest').textContent = best > 0 ? '+'+best.toFixed(1)+'%' : '—';
+}
+
+function updateTabCounts() {
+  const lineEdges = games.filter(g=>g.hasHR&&g.bestEdge>=lineMinEdge).length;
+  const propEdges = propData.filter(p=>p.hasHR&&p.bestEdge>=propMinEdge).length;
+  document.getElementById('linesCount').textContent = games.length;
+  document.getElementById('propsCount').textContent = propEdges > 0 ? propEdges+' edges' : propData.length > 0 ? propData.length+' lines' : '—';
+}
+
+// Returns flat list of {game, marketType, edge data} for rendering
+function filteredMarkets() {
+  const result = [];
+  for (const g of games) {
+    const hrs = g.hoursToGame;
+    if (maxHours < 24 && hrs > maxHours) continue;
+
+    // Moneyline
+    if (marketTypeFilter === 'all' || marketTypeFilter === 'h2h') {
+      if (g.cs && g.cs.bookCount >= minBooks) {
+        const hasVal = g.hasHR && g.mlBestEdge >= lineMinEdge;
+        if (lineTab === 'value' && !hasVal) continue;
+        if (lineTab === 'high' && !(g.hasHR && g.mlBestEdge >= 5)) continue;
+        result.push({ game: g, type: 'h2h' });
+      }
+    }
+
+    // Spreads
+    if (marketTypeFilter === 'all' || marketTypeFilter === 'spreads') {
+      for (const s of (g.spreadEdges || [])) {
+        if (s.bookCount < minBooks) continue;
+        const hasVal = s.hasHR && s.bestEdge >= lineMinEdge;
+        if (lineTab === 'value' && !hasVal) continue;
+        if (lineTab === 'high' && !(s.hasHR && s.bestEdge >= 5)) continue;
+        result.push({ game: g, type: 'spreads', spread: s });
+      }
+    }
+
+    // Totals
+    if (marketTypeFilter === 'all' || marketTypeFilter === 'totals') {
+      for (const t of (g.totalEdges || [])) {
+        if (t.bookCount < minBooks) continue;
+        const hasVal = t.hasHR && t.bestEdge >= lineMinEdge;
+        if (lineTab === 'value' && !hasVal) continue;
+        if (lineTab === 'high' && !(t.hasHR && t.bestEdge >= 5)) continue;
+        result.push({ game: g, type: 'totals', total: t });
+      }
+    }
+  }
+  return result;
+}
+
+function filteredGames() {
+  // Keep for compatibility — returns unique games
+  return [...new Map(filteredMarkets().map(m => [m.game.id, m.game])).values()];
+}
+
+function renderLines() {
+  const markets = filteredMarkets().sort((a, b) => {
+    const ae = getMarketEdge(a), be = getMarketEdge(b);
+    const av = ae >= lineMinEdge ? 1 : 0, bv = be >= lineMinEdge ? 1 : 0;
+    if (av !== bv) return bv - av;
+    return be - ae;
+  });
+
+  const el = document.getElementById('linesContent');
+  if (!markets.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-ico">🔍</div><div class="empty-ttl">No markets match filters</div><div class="empty-dsc">Try lowering the value threshold, adjusting the market type dropdown, or switching to All Games.</div></div>`;
+    return;
+  }
+
+  const dateStr = isDemo ? '⚠ DEMO DATA' : markets.length + ' market' + (markets.length !== 1 ? 's' : '') + ' · ' + new Date().toLocaleDateString('en-US', {weekday:'long',month:'short',day:'numeric'});
+
+  el.innerHTML = `<div class="list">
+    <div class="list-hdr">${dateStr}</div>
+    ${markets.map(renderMarketCard).join('')}
+  </div>`;
+
+  // update count badge
+  const mtEl = document.getElementById('marketTypeCount');
+  if (mtEl) mtEl.innerHTML = '<strong>' + markets.length + '</strong> market' + (markets.length !== 1 ? 's' : '') + ' shown';
+}
+
+function getMarketEdge(m) {
+  if (m.type === 'h2h') return m.game.mlBestEdge || 0;
+  if (m.type === 'spreads') return m.spread?.bestEdge || 0;
+  if (m.type === 'totals') return m.total?.bestEdge || 0;
+  return 0;
+}
+
+function renderMarketCard(m) {
+  if (m.type === 'h2h') return renderMLCard(m.game);
+  if (m.type === 'spreads') return renderSpreadCard(m.game, m.spread);
+  if (m.type === 'totals') return renderTotalCard(m.game, m.total);
+  return '';
+}
+
+function renderMLCard(g) {
+  const hasEdge = g.hasHR && g.bestEdge >= lineMinEdge;
+  const ec = !g.hasHR ? 'low' : g.bestEdge >= 5 ? 'high' : g.bestEdge >= lineMinEdge ? 'med' : 'low';
+  const edgeSide = g.awayEdge >= g.homeEdge ? 'away' : 'home';
+  const edgeTeam = edgeSide === 'away' ? g.away : g.home;
+  const csOdds = fmtAm(edgeSide==='away'?g.csAwayAm:g.csHomeAm);
+  const hrOdds = g.hasHR ? fmtAm(edgeSide==='away'?g.hrRawAwayAm:g.hrRawHomeAm) : '—';
+  const csProb = edgeSide==='away'?g.cs.away:g.cs.home;
+  const hrProb = g.hasHR?(edgeSide==='away'?g.hr.a:g.hr.b):null;
+  const edgeVal = edgeSide==='away'?g.awayEdge:g.homeEdge;
+
+  const hrs = g.hoursToGame;
+  const tClass = hrs<1?'hot':hrs<3?'warm':'cool';
+  const tLabel = hrs<0?'Live':hrs<1?Math.round(hrs*60)+'m':hrs<24?hrs.toFixed(1)+'h':new Date(g.time).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+
+  const bookChips = g.cs.perBook.map(b=>`
+    <div class="bkchip"><span>${b.name}</span><span class="bkchip-odds">${fmtAm(decToAm(b.awayDec))}/${fmtAm(decToAm(b.homeDec))}</span></div>`).join('');
+
+  const hrChip = g.hasHR
+    ? `<div class="bkchip ${hasEdge?'val-chip':'hr-chip'}"><span>Hard Rock${hasEdge?' ✓':''}</span><span class="bkchip-odds">${fmtAm(g.hrRawAwayAm)}/${fmtAm(g.hrRawHomeAm)}</span></div>`
+    : `<div class="bkchip" style="opacity:.4">Hard Rock — no line</div>`;
+
+  return `
+<div class="gcard ${ec}">
+  <div class="gtop">
+    <div class="ginfo">
+      <div class="gmatch">${g.away} <span style="color:var(--muted);font-weight:400">@</span> ${g.home}</div>
+      <div class="gmeta">
+        <span class="tchip ${tClass}">${tLabel}</span>
+        <span class="mitem">📚 ${g.cs.bookCount} books</span>
+        <span class="mitem">vig ${g.cs.avgVig.toFixed(2)}%</span>
+      </div>
+    </div>
+    <div class="etag ${ec}">
+      ${!g.hasHR?'⏳ No HR Line':g.bestEdge>=5?'🔥 +'+g.bestEdge.toFixed(1)+'% value':g.bestEdge>=lineMinEdge?'✅ +'+g.bestEdge.toFixed(1)+'% value':g.bestEdge>0?'+'+g.bestEdge.toFixed(1)+'%':'No HR value'}
+    </div>
+  </div>
+  <div class="bkrow">
+    <div class="bkrow-hdr">${g.cs.bookCount} consensus books vs Hard Rock</div>
+    <div class="bkrow-chips">${bookChips}${hrChip}<div class="bk-consensus">${g.away.split(' ').pop()} ${fmtAm(g.csAwayAm)} | ${g.home.split(' ').pop()} ${fmtAm(g.csHomeAm)}</div></div>
+  </div>
+  ${hasEdge?`
+  <div class="val-alert">
+    <span>💡</span>
+    <span><strong class="b">${g.cs.bookCount}-book consensus</strong> has <strong>${edgeTeam}</strong> at <span class="hl">${csOdds}</span> (${csProb.toFixed(1)}% true prob). <strong class="o">Hard Rock</strong> offers <span class="hl">${hrOdds}</span> (${hrProb?hrProb.toFixed(1):'?'}% implied) — <strong style="color:var(--green)">${edgeVal.toFixed(1)}% edge</strong>. <strong class="o">Bet Hard Rock.</strong></span>
+  </div>`:''}
+  ${g.hasHR?`
+  <div class="odds-grid">
+    <div class="ocol">
+      <div class="ocol-hdr"><div class="dot dot-b"></div>Consensus · No-Vig</div>
+      ${trow(g.away,g.cs.away,g.csAwayAm,false)}
+      ${trow(g.home,g.cs.home,g.csHomeAm,false)}
+    </div>
+    <div class="ocol">
+      <div class="ocol-hdr"><div class="dot dot-o"></div>Hard Rock · No-Vig</div>
+      ${trow(g.away,g.hr.a,g.hrRawAwayAm,g.awayEdge>=lineMinEdge,true)}
+      ${trow(g.home,g.hr.b,g.hrRawHomeAm,g.homeEdge>=lineMinEdge,true)}
+    </div>
+  </div>
+  <div class="gbot">
+    <div class="gbi"><span class="gbi-lbl">${g.away.split(' ').pop()} edge</span><span class="gbi-val ${g.awayEdge>=lineMinEdge?'pos':g.awayEdge>0?'flat':'neg'}">${g.awayEdge>0?'+':''}${g.awayEdge.toFixed(2)}%</span></div>
+    <div class="gbi"><span class="gbi-lbl">${g.home.split(' ').pop()} edge</span><span class="gbi-val ${g.homeEdge>=lineMinEdge?'pos':g.homeEdge>0?'flat':'neg'}">${g.homeEdge>0?'+':''}${g.homeEdge.toFixed(2)}%</span></div>
+    <div class="gbi"><span class="gbi-lbl">Books</span><span class="gbi-val" style="color:var(--cons)">${g.cs.bookCount}</span></div>
+    <div class="gbi"><span class="gbi-lbl">Time</span><span class="gbi-val ${g.hoursToGame<2?'pos':'flat'}">${hrs<0?'Live':hrs<1?Math.round(hrs*60)+'m':hrs.toFixed(1)+'h'}</span></div>
+  </div>`:`<div style="padding:12px 16px;color:var(--muted);font-size:12px;font-style:italic;">Hard Rock hasn't posted a line yet — ${g.cs.bookCount} consensus books available.</div>`}
+</div>`;
+}
+
+function trow(name, prob, american, highlight, isHR=false) {
+  const amStr = fmtAm(american);
+  const isPos = amStr.startsWith('+');
+  return `<div class="trow" style="${highlight?'background:rgba(0,229,160,.05);border-radius:4px;padding:6px 5px;margin:0 -5px;':''}">
+    <div class="tname" style="${highlight?'color:var(--green)':isHR?'color:var(--hr)':''}">${name}</div>
+    <div class="tright"><div class="timp">${prob.toFixed(1)}%</div><div class="tamt ${highlight?'pos':isHR?'hr-val':isPos?'pos':'neg'}">${amStr}</div></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════
+// RENDER — PROPS
+// ═══════════════════════════════════════
+
+function filteredProps() {
+  return propData.filter(p => {
+    // Global stat category filter
+    if (globalStatFilter !== 'all' && p.statKey !== globalStatFilter) return false;
+    // Value filters
+    if (propTab === 'value') return p.hasHR && p.bestEdge >= propMinEdge;
+    if (propTab === 'high')  return p.hasHR && p.bestEdge >= 5;
+    return true;
+  });
+}
+
+// Active stat category filter per game
+
+function renderProps() {
+  const el = document.getElementById('propsContent');
+  const list = filteredProps();
+  const gcEl = document.getElementById('globalStatCount');
+  if (gcEl) gcEl.innerHTML = '<strong>' + list.length + '</strong> prop line' + (list.length !== 1 ? 's' : '') + ' shown';
+
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-ico">📊</div><div class="empty-ttl">${propData.length?'No props match filters':'No props loaded'}</div><div class="empty-dsc">${propData.length?'Try lowering the edge threshold or switching to All Props.':'Load live data to fetch player props.'}</div></div>`;
+    return;
+  }
+
+  // Group by game
+  const byGame = {};
+  for (const p of list) {
+    if (!byGame[p.gameId]) byGame[p.gameId] = { away:p.away, home:p.home, time:p.time, props:[] };
+    byGame[p.gameId].props.push(p);
+  }
+
+  let html = `<div>
+    <div class="list-hdr">${isDemo?'⚠ DEMO DATA — live props load per-game':Object.keys(byGame).length+' game'+(Object.keys(byGame).length!==1?'s':'')+' · '+new Date().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}</div>`;
+
+  for (const [gameId, gdata] of Object.entries(byGame)) {
+    const props = gdata.props;
+    const edges = props.filter(p=>p.hasHR&&p.bestEdge>=propMinEdge).length;
+    const hrs = (new Date(gdata.time) - Date.now())/3600000;
+    const tClass = hrs<1?'hot':hrs<3?'warm':'cool';
+    const tLabel = hrs<0?'Live':hrs<1?Math.round(hrs*60)+'m':hrs.toFixed(1)+'h';
+
+    const filteredByGame = props;
+
+    const byPlayer = {};
+    for (const p of filteredByGame) {
+      if (!byPlayer[p.player]) byPlayer[p.player] = [];
+      byPlayer[p.player].push(p);
+    }
+    // Sort players: those with HR value first
+    const sortedPlayers = Object.entries(byPlayer).sort((a,b) => {
+      const aMax = Math.max(...a[1].map(p=>p.bestEdge));
+      const bMax = Math.max(...b[1].map(p=>p.bestEdge));
+      return bMax - aMax;
+    });
+
+    html += `
+<div class="prop-game-block">
+  <div class="prop-game-hdr">
+    <div>
+      <div class="prop-game-title">${gdata.away} @ ${gdata.home}</div>
+      <div class="prop-game-meta">
+        <span class="tchip ${tClass}" style="font-size:9px;padding:1px 6px;">${tLabel}</span>
+        <span>${props.length} prop lines</span>
+        <span>${new Set(props.map(p=>p.player)).size} players</span>
+      </div>
+    </div>
+    ${edges>0?`<div class="prop-game-summary">🔥 ${edges} HR value bet${edges!==1?'s':''}</div>`:''}
+  </div>
+
+
+  <div class="prop-rows" id="propRows_${gameId}">
+    <div class="prop-row-hdr">
+      <span>Stat / Line</span><span>Side</span><span>Consensus</span><span>HR Odds</span><span>HR Prob</span><span style="text-align:right">Edge</span>
+    </div>
+    ${sortedPlayers.map(([player, pProps]) => {
+      const sortedProps = [...pProps].sort((a,b)=>b.bestEdge-a.bestEdge);
+      return `<div class="prop-player-block">
+        <div class="prop-player-name">${player}</div>
+        ${sortedProps.map(p => renderPropRow(p)).join('')}
+      </div>`;
+    }).join('')}
+  </div>
+</div>`;
+  }
+
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderPropRow(p) {
+  const hasVal = p.hasHR && p.bestEdge >= propMinEdge;
+
+  const renderSide = (side, consProb, hrProb, hrDec, edgeVal) => {
+    const consAmStr = fmtAm(parseInt(probToAm(consProb)));
+    const hrAmStr = p.hasHR && hrDec ? fmtAm(parseInt(decToAm(hrDec))) : null;
+    const isVal = p.hasHR && edgeVal >= propMinEdge;
+    return `<div class="prop-row ${isVal?'has-val':''}">
+      <span class="prop-line">${p.statLabel} ${p.line}</span>
+      <span class="prop-side">${side}</span>
+      <span class="prop-cons-odds">${consAmStr} <span style="font-size:9px;color:var(--muted)">(${consProb.toFixed(1)}%)</span></span>
+      <span class="prop-hr-odds ${!p.hasHR?'missing':isVal?'val':'no-val'}">${hrAmStr||'—'}</span>
+      <span class="prop-hr-odds ${!p.hasHR?'missing':isVal?'val':'no-val'}" style="font-size:11px;">${p.hasHR&&hrProb?hrProb.toFixed(1)+'%':'—'}</span>
+      <span class="prop-edge ${edgeVal>=5?'strong':edgeVal>=propMinEdge?'pos':'neg'}" style="text-align:right">${p.hasHR?((edgeVal>0?'+':'')+edgeVal.toFixed(2)+'%'):'—'}</span>
+    </div>`;
+  };
+
+  return renderSide('Over', p.cs.over, p.hrOver, p.hrOverDec, p.overEdge)
+       + renderSide('Under', p.cs.under, p.hrUnder, p.hrUnderDec, p.underEdge);
+}
+
+
+// Sync game-level cat selection TO the global dropdown if all games match
+
+// ═══════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════
+
+function setMainTab(t, btn) {
+  mainTab = t;
+  document.querySelectorAll('.main-tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('linesView').style.display = t==='lines' ? '' : 'none';
+  document.getElementById('propsView').style.display = t==='props' ? '' : 'none';
+
+  // Lazy load props when tab is first clicked in live mode
+  if (t==='props' && !isDemo && propData.length===0) {
+    const key = document.getElementById('oddsKey').value.trim() || localStorage.getItem('oddsKey');
+    if (key && rawGamesCache.length > 0) {
+      fetchAllProps(key, rawGamesCache);
+    } else if (key && games.length > 0) {
+      // Fallback: re-fetch game list to get IDs, then fetch props
+      fetchOdds(key).then(raw => {
+        rawGamesCache = raw;
+        fetchAllProps(key, raw);
+      }).catch(e => showError(e.message));
+    }
+  }
+}
+
+function setLineTab(t, btn) {
+  lineTab = t;
+  document.querySelectorAll('#linesView .filter-tabs .ftab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderLines();
+}
+
+function setPropTab(t, btn) {
+  propTab = t;
+  document.querySelectorAll('#propsView .filter-tabs .ftab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderProps();
+  updatePropStats();
+}
+
+// ── THEME TOGGLE ──────────────────────────────
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeIcon').textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('nbaTheme', isLight ? 'light' : 'dark');
+}
+
+// Apply saved theme on load
+(function() {
+  if (localStorage.getItem('nbaTheme') === 'light') {
+    document.body.classList.add('light');
+    document.addEventListener('DOMContentLoaded', () => {
+      const icon = document.getElementById('themeIcon');
+      if (icon) icon.textContent = '🌙';
+    });
+  }
+})();
+
+// ── GLOBAL STAT FILTER ────────────────────────
+function setGlobalStat(val) {
+  globalStatFilter = val;
+  renderProps();
+  updatePropStats();
+  // Update count display
+  const filtered = filteredProps();
+  const el = document.getElementById('globalStatCount');
+  if (el) el.innerHTML = '<strong>' + filtered.length + '</strong> prop line' + (filtered.length !== 1 ? 's' : '') + ' shown';
+}
+
+function setMarketType(val) {
+  marketTypeFilter = val;
+  renderLines();
+  updateLineStats();
+}
+
+function setLineEdge(v) { lineMinEdge=parseInt(v); document.getElementById('lineEdgeVal').textContent=v+'%'; renderLines(); updateLineStats(); updateTabCounts(); }
+function setPropEdge(v) { propMinEdge=parseInt(v); document.getElementById('propEdgeVal').textContent=v+'%'; renderProps(); updatePropStats(); updateTabCounts(); }
+function setMinBooks(v) { minBooks=parseInt(v); document.getElementById('booksVal').textContent=v; renderLines(); updateLineStats(); }
+
+function setLoading(on) {
+  document.getElementById('refreshBtn').disabled = on;
+  document.getElementById('statusTxt').textContent = on ? 'Fetching…' : 'Live';
+  if (on) {
+    document.getElementById('linesContent').innerHTML = `<div class="empty"><div class="spin"></div><div class="empty-ttl">Fetching NBA lines...</div></div>`;
+  }
+}
+
+function showError(msg) {
+  document.getElementById('linesContent').innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-ttl">Failed to load</div><div class="empty-dsc"><strong style="color:var(--hr)">${msg}</strong><br><br>Make sure your file is hosted (not opened locally), your key is correct, and you have API credits remaining. Use the 🔍 Diagnose button for details.</div></div>`;
+}
+
+async function runDiagnostic() {
+  const ok = document.getElementById('oddsKey').value.trim() || localStorage.getItem('oddsKey');
+  const lines = [];
+  const log = (e,m) => { lines.push(e+' '+m); render(); };
+  const render = () => {
+    document.getElementById('linesContent').innerHTML = `<div class="empty" style="text-align:left;padding:28px 32px;"><div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:14px;">🔍 API Diagnostic</div><div style="font-size:12px;line-height:2.1;color:var(--text);font-family:monospace;">${lines.map(l=>`<div>${l}</div>`).join('')}</div></div>`;
+  };
+  render();
+  log('▶','Starting diagnostic...');
+  if (!ok) { log('❌','No API key entered.'); return; }
+  log('✅','Key found: '+ok.slice(0,4)+'••••'+ok.slice(-4));
+  try {
+    const r = await fetch('https://api.the-odds-api.com/v4/sports/?apiKey='+ok);
+    log('✅','Connected — status: '+r.status);
+    if (r.status===401){log('❌','INVALID KEY (401). Re-copy from the-odds-api.com');return;}
+    if (r.status===429){log('❌','RATE LIMIT (429). Free tier exhausted for this month.');return;}
+    if (!r.ok){log('❌','Error '+r.status);return;}
+    const sports=await r.json();
+    log('✅','API key valid. Sports available: '+sports.length);
+    const rem=r.headers.get('x-requests-remaining');
+    const used=r.headers.get('x-requests-used');
+    if(rem!==null)log('✅','Credits — Used: '+used+' | Remaining: '+rem);
+  } catch(e) { log('❌','Network error: '+e.message+' — Make sure file is hosted, not opened locally.'); return; }
+  try {
+    const r2=await fetch('https://api.the-odds-api.com/v4/sports/basketball_nba/odds/?apiKey='+ok+'&regions=us&markets=h2h&oddsFormat=decimal&bookmakers=draftkings');
+    const d2=await r2.json();
+    log('✅','NBA games found: '+d2.length);
+    if(d2.length===0)log('⚠️','No games — NBA may be out of season or no games today.');
+    else log('✅','Sample: '+(d2[0]?.away_team||'?')+' @ '+(d2[0]?.home_team||'?'));
+  } catch(e){log('❌','NBA fetch error: '+e.message);}
+  try {
+    const r3=await fetch('https://api.the-odds-api.com/v4/sports/basketball_nba/odds/?apiKey='+ok+'&regions=us&markets=h2h&oddsFormat=decimal&bookmakers=hardrock');
+    const d3=await r3.json();
+    const hasHR=d3.some&&d3.some(g=>g.bookmakers?.some(b=>b.key==='hardrock'));
+    log(hasHR?'✅':'⚠️', hasHR?'Hard Rock lines available on your plan.':'Hard Rock not found — may require paid plan. Dashboard still works with other books.');
+  } catch(e){log('⚠️','Could not check Hard Rock: '+e.message);}
+  log('✅','Diagnostic complete.');
+}
+
+
+// ═══════════════════════════════════════
+// RENDER — SPREAD CARDS
+// ═══════════════════════════════════════
+
+function renderSpreadCard(g, s) {
+  const hasEdge = s.hasHR && s.bestEdge >= lineMinEdge;
+  const ec = s.bestEdge >= 5 ? 'high' : s.bestEdge >= lineMinEdge ? 'med' : 'low';
+  const hrs = g.hoursToGame;
+  const tClass = hrs<1?'hot':hrs<3?'warm':'cool';
+  const tLabel = hrs<0?'Live':hrs<1?Math.round(hrs*60)+'m':hrs.toFixed(1)+'h';
+
+  // Which side has value?
+  const edgeSide = s.awayEdge >= s.homeEdge ? 'away' : 'home';
+  const edgeTeam = edgeSide === 'away' ? g.away : g.home;
+  const edgePt   = edgeSide === 'away' ? s.point : -s.point;
+  const edgeSign = edgePt > 0 ? '+' : '';
+  const edgeVal  = edgeSide === 'away' ? s.awayEdge : s.homeEdge;
+
+  const csAwayAm = s.csSpread ? fmtAm(parseInt(probToAm(s.csSpread.away))) : '—';
+  const csHomeAm = s.csSpread ? fmtAm(parseInt(probToAm(s.csSpread.home))) : '—';
+  const hrAwayAm = s.hrSpread ? fmtAm(parseInt(probToAm(s.hrSpread.a))) : '—';
+  const hrHomeAm = s.hrSpread ? fmtAm(parseInt(probToAm(s.hrSpread.b))) : '—';
+  const hrRawAwayAm = s.hrRaw ? fmtAm(parseInt(decToAm(s.hrRaw.awayDec))) : '—';
+  const hrRawHomeAm = s.hrRaw ? fmtAm(parseInt(decToAm(s.hrRaw.homeDec))) : '—';
+
+  const bookChips = s.csSpread?.perBook?.map(b => `
+    <div class="bkchip"><span>${b.name}</span><span class="bkchip-odds">${fmtAm(decToAm(b.awayDec))}/${fmtAm(decToAm(b.homeDec))}</span></div>`).join('') || '';
+
+  const hrChip = s.hasHR
+    ? `<div class="bkchip ${hasEdge?'val-chip':'hr-chip'}"><span>Hard Rock${hasEdge?' ✓':''}</span><span class="bkchip-odds">${hrRawAwayAm}/${hrRawHomeAm}</span></div>`
+    : `<div class="bkchip" style="opacity:.4">Hard Rock — no spread line</div>`;
+
+  return `
+<div class="gcard ${ec}">
+  <div class="gtop">
+    <div class="ginfo">
+      <div class="gmatch">${g.away} <span style="color:var(--muted);font-weight:400">@</span> ${g.home}</div>
+      <div class="gmeta">
+        <span class="tchip ${tClass}">${tLabel}</span>
+        <span class="mitem" style="background:var(--cons-dim);border:1px solid rgba(77,166,255,.2);color:var(--cons);padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700;">SPREAD</span>
+        <span class="mitem">Line: ${g.away.split(' ').pop()} ${edgeSign}${s.point}</span>
+        <span class="mitem">📚 ${s.bookCount} books</span>
+      </div>
+    </div>
+    <div class="etag ${ec}">${s.bestEdge>=5?'🔥 ':s.bestEdge>=lineMinEdge?'✅ ':''}${s.bestEdge>0?'+':''}${s.bestEdge.toFixed(1)}% value</div>
+  </div>
+  <div class="bkrow">
+    <div class="bkrow-hdr">${s.bookCount} consensus books vs Hard Rock — Spread ${edgeSign}${s.point}</div>
+    <div class="bkrow-chips">${bookChips}${hrChip}
+      <div class="bk-consensus">${g.away.split(' ').pop()} ${csAwayAm} | ${g.home.split(' ').pop()} ${csHomeAm}</div>
+    </div>
+  </div>
+  ${hasEdge ? `
+  <div class="val-alert"><span>💡</span>
+    <span><strong class="b">${s.bookCount}-book consensus</strong> has <strong>${edgeTeam}</strong> ${edgeSign}${edgePt} at <span class="hl">${edgeSide==='away'?csAwayAm:csHomeAm}</span>. <strong class="o">Hard Rock</strong> offers <span class="hl">${edgeSide==='away'?hrRawAwayAm:hrRawHomeAm}</span> — <strong style="color:var(--green)">${edgeVal.toFixed(1)}% edge. Bet Hard Rock.</strong></span>
+  </div>` : ''}
+  ${s.hasHR ? `
+  <div class="odds-grid">
+    <div class="ocol"><div class="ocol-hdr"><div class="dot dot-b"></div>Consensus · No-Vig</div>
+      ${trow(g.away+' '+(s.point>0?'+':'')+s.point, s.csSpread?.away||50, parseInt(probToAm(s.csSpread?.away||50)), false)}
+      ${trow(g.home+' '+(-s.point>0?'+':'')+(-s.point), s.csSpread?.home||50, parseInt(probToAm(s.csSpread?.home||50)), false)}
+    </div>
+    <div class="ocol"><div class="ocol-hdr"><div class="dot dot-o"></div>Hard Rock · No-Vig</div>
+      ${trow(g.away+' '+(s.point>0?'+':'')+s.point, s.hrSpread?.a||50, parseInt(decToAm(s.hrRaw?.awayDec||2)), s.awayEdge>=lineMinEdge, true)}
+      ${trow(g.home+' '+(-s.point>0?'+':'')+(-s.point), s.hrSpread?.b||50, parseInt(decToAm(s.hrRaw?.homeDec||2)), s.homeEdge>=lineMinEdge, true)}
+    </div>
+  </div>
+  <div class="gbot">
+    <div class="gbi"><span class="gbi-lbl">${g.away.split(' ').pop()} spread edge</span><span class="gbi-val ${s.awayEdge>=lineMinEdge?'pos':s.awayEdge>0?'flat':'neg'}">${s.awayEdge>0?'+':''}${s.awayEdge.toFixed(2)}%</span></div>
+    <div class="gbi"><span class="gbi-lbl">${g.home.split(' ').pop()} spread edge</span><span class="gbi-val ${s.homeEdge>=lineMinEdge?'pos':s.homeEdge>0?'flat':'neg'}">${s.homeEdge>0?'+':''}${s.homeEdge.toFixed(2)}%</span></div>
+    <div class="gbi"><span class="gbi-lbl">Books</span><span class="gbi-val" style="color:var(--cons)">${s.bookCount}</span></div>
+    <div class="gbi"><span class="gbi-lbl">Time</span><span class="gbi-val ${hrs<2?'pos':'flat'}">${hrs<0?'Live':hrs<1?Math.round(hrs*60)+'m':hrs.toFixed(1)+'h'}</span></div>
+  </div>` : `<div style="padding:12px 16px;color:var(--muted);font-size:12px;font-style:italic;">Hard Rock hasn't posted a spread for this game yet.</div>`}
+</div>`;
+}
+
+// ═══════════════════════════════════════
+// RENDER — TOTAL CARDS
+// ═══════════════════════════════════════
+
+function renderTotalCard(g, t) {
+  const hasEdge = t.hasHR && t.bestEdge >= lineMinEdge;
+  const ec = t.bestEdge >= 5 ? 'high' : t.bestEdge >= lineMinEdge ? 'med' : 'low';
+  const hrs = g.hoursToGame;
+  const tClass = hrs<1?'hot':hrs<3?'warm':'cool';
+  const tLabel = hrs<0?'Live':hrs<1?Math.round(hrs*60)+'m':hrs.toFixed(1)+'h';
+
+  const edgeSide = t.overEdge >= t.underEdge ? 'over' : 'under';
+  const edgeVal  = edgeSide === 'over' ? t.overEdge : t.underEdge;
+
+  const csOverAm  = t.csTotal ? fmtAm(parseInt(probToAm(t.csTotal.over)))  : '—';
+  const csUnderAm = t.csTotal ? fmtAm(parseInt(probToAm(t.csTotal.under))) : '—';
+  const hrOverAm  = t.hrRaw ? fmtAm(parseInt(decToAm(t.hrRaw.overDec)))  : '—';
+  const hrUnderAm = t.hrRaw ? fmtAm(parseInt(decToAm(t.hrRaw.underDec))) : '—';
+
+  const bookChips = t.csTotal?.perBook?.map(b => `
+    <div class="bkchip"><span>${b.name}</span><span class="bkchip-odds">O ${fmtAm(decToAm(b.overDec))} / U ${fmtAm(decToAm(b.underDec))}</span></div>`).join('') || '';
+
+  const hrChip = t.hasHR
+    ? `<div class="bkchip ${hasEdge?'val-chip':'hr-chip'}"><span>Hard Rock${hasEdge?' ✓':''}</span><span class="bkchip-odds">O ${hrOverAm} / U ${hrUnderAm}</span></div>`
+    : `<div class="bkchip" style="opacity:.4">Hard Rock — no total line</div>`;
+
+  return `
+<div class="gcard ${ec}">
+  <div class="gtop">
+    <div class="ginfo">
+      <div class="gmatch">${g.away} <span style="color:var(--muted);font-weight:400">@</span> ${g.home}</div>
+      <div class="gmeta">
+        <span class="tchip ${tClass}">${tLabel}</span>
+        <span class="mitem" style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.25);color:var(--purple);padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700;">TOTAL</span>
+        <span class="mitem">O/U ${t.point}</span>
+        <span class="mitem">📚 ${t.bookCount} books</span>
+      </div>
+    </div>
+    <div class="etag ${ec}">${t.bestEdge>=5?'🔥 ':t.bestEdge>=lineMinEdge?'✅ ':''}${t.bestEdge>0?'+':''}${t.bestEdge.toFixed(1)}% value</div>
+  </div>
+  <div class="bkrow">
+    <div class="bkrow-hdr">${t.bookCount} consensus books vs Hard Rock — Total ${t.point}</div>
+    <div class="bkrow-chips">${bookChips}${hrChip}
+      <div class="bk-consensus">Over ${csOverAm} | Under ${csUnderAm}</div>
+    </div>
+  </div>
+  ${hasEdge ? `
+  <div class="val-alert"><span>💡</span>
+    <span><strong class="b">${t.bookCount}-book consensus</strong> has the <strong>${edgeSide === 'over' ? 'Over' : 'Under'} ${t.point}</strong> at <span class="hl">${edgeSide==='over'?csOverAm:csUnderAm}</span>. <strong class="o">Hard Rock</strong> offers <span class="hl">${edgeSide==='over'?hrOverAm:hrUnderAm}</span> — <strong style="color:var(--green)">${edgeVal.toFixed(1)}% edge. Bet Hard Rock.</strong></span>
+  </div>` : ''}
+  ${t.hasHR ? `
+  <div class="odds-grid">
+    <div class="ocol"><div class="ocol-hdr"><div class="dot dot-b"></div>Consensus · No-Vig</div>
+      ${trow('Over '+t.point, t.csTotal?.over||50, parseInt(probToAm(t.csTotal?.over||50)), false)}
+      ${trow('Under '+t.point, t.csTotal?.under||50, parseInt(probToAm(t.csTotal?.under||50)), false)}
+    </div>
+    <div class="ocol"><div class="ocol-hdr"><div class="dot dot-o"></div>Hard Rock · No-Vig</div>
+      ${trow('Over '+t.point, t.hrTotal?.a||50, parseInt(decToAm(t.hrRaw?.overDec||2)), t.overEdge>=lineMinEdge, true)}
+      ${trow('Under '+t.point, t.hrTotal?.b||50, parseInt(decToAm(t.hrRaw?.underDec||2)), t.underEdge>=lineMinEdge, true)}
+    </div>
+  </div>
+  <div class="gbot">
+    <div class="gbi"><span class="gbi-lbl">Over ${t.point} edge</span><span class="gbi-val ${t.overEdge>=lineMinEdge?'pos':t.overEdge>0?'flat':'neg'}">${t.overEdge>0?'+':''}${t.overEdge.toFixed(2)}%</span></div>
+    <div class="gbi"><span class="gbi-lbl">Under ${t.point} edge</span><span class="gbi-val ${t.underEdge>=lineMinEdge?'pos':t.underEdge>0?'flat':'neg'}">${t.underEdge>0?'+':''}${t.underEdge.toFixed(2)}%</span></div>
+    <div class="gbi"><span class="gbi-lbl">Books</span><span class="gbi-val" style="color:var(--cons)">${t.bookCount}</span></div>
+    <div class="gbi"><span class="gbi-lbl">Time</span><span class="gbi-val ${hrs<2?'pos':'flat'}">${hrs<0?'Live':hrs<1?Math.round(hrs*60)+'m':hrs.toFixed(1)+'h'}</span></div>
+  </div>` : `<div style="padding:12px 16px;color:var(--muted);font-size:12px;font-style:italic;">Hard Rock hasn't posted a total for this game yet.</div>`}
+</div>`;
+}
+
+setInterval(()=>{ if(!isDemo) fetchData(); }, 5*60*1000);
+</script>
+</body>
+</html>
