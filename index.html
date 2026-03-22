@@ -405,6 +405,7 @@
 
   .foot { text-align: center; font-size: 10px; color: var(--muted2); padding: 20px 0; letter-spacing: .5px; }
 
+
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
@@ -464,6 +465,7 @@
         <button class="xbtn" onclick="loadDemo()">Demo Mode</button>
         <button class="xbtn" onclick="runDiagnostic()" style="border-color:rgba(255,187,0,.4);color:var(--yellow);">🔍 Diagnose</button>
       </div>
+
     </div>
   </div>
 
@@ -801,6 +803,7 @@ function processGame(g) {
   const bestEdge = parseFloat(Math.max(mlBestEdge, spreadBestEdge, totalBestEdge).toFixed(2));
 
   const hoursToGame = (new Date(g.time) - Date.now()) / 3600000;
+
   return {
     ...g, cs, hr, hasHR,
     awayEdge, homeEdge, mlBestEdge, bestEdge,
@@ -1125,6 +1128,7 @@ function getDemoProps() {
 function loadDemo() {
   isDemo = true;
   document.getElementById('demoBadge').style.display = '';
+
   games = getDemoGames().map(processGame);
   propData = getDemoProps();
   renderLines();
@@ -1154,15 +1158,16 @@ async function fetchData() {
   setLoading(true);
 
   try {
-    // Step 1: fetch game lines
-    const gamesRaw = await fetchOdds(ok);
-    rawGamesCache = gamesRaw; // cache for lazy prop load
+    // Step 1: fetch current game lines
+    const gamesRaw = await fetchOdds(ok, false);
+    rawGamesCache = gamesRaw;
+
     games = buildGames(gamesRaw).map(processGame);
     updateLineStats();
     updateTabCounts();
     renderLines();
 
-    // Step 2: fetch props per game (1 credit each)
+    // Step 3: fetch props per game
     const gameCount = games.length;
     const propCreditCost = gameCount * PROP_MARKET_KEYS.length;
     document.getElementById('gamesForProps').textContent = gameCount;
@@ -1171,7 +1176,6 @@ async function fetchData() {
     if (mainTab === 'props') {
       await fetchAllProps(ok, gamesRaw);
     } else {
-      // Lazy load — fetch props when user switches to props tab
       document.getElementById('propsContent').innerHTML = `
         <div class="empty">
           <div class="empty-ico">📊</div>
@@ -1205,6 +1209,7 @@ async function fetchOdds(apiKey) {
   if (!r.ok) throw new Error('Odds API error ' + r.status);
 
   const data = await r.json();
+
   const rem = r.headers.get('x-requests-remaining');
   const used = r.headers.get('x-requests-used');
   if (rem !== null) {
@@ -1214,14 +1219,18 @@ async function fetchOdds(apiKey) {
   return data;
 }
 
+/**
+ * Build a lookup cache of opening lines from historical data.
+ */
+
 async function fetchAllProps(apiKey, gamesRaw) {
   const total = gamesRaw.length;
   let done = 0;
 
-  const updateProgress = () => {
+  const updateProgress = (msg) => {
     document.getElementById('propsContent').innerHTML =
       `<div class="empty"><div class="spin"></div>
-       <div class="empty-ttl">Loading props... ${done}/${total}</div>
+       <div class="empty-ttl">${msg || 'Loading props... ' + done + '/' + total}</div>
        <div class="empty-dsc">Fetching ${total} game${total!==1?'s':''} — each game costs ${PROP_MARKET_KEYS.length} API credits (1 per stat category).</div>
        <div style="margin-top:16px;background:var(--b1);border-radius:4px;height:4px;width:100%;max-width:300px;margin-left:auto;margin-right:auto;">
          <div style="background:var(--hr);height:4px;border-radius:4px;width:${Math.round((done/total)*100)}%;transition:width .3s;"></div>
@@ -1235,6 +1244,7 @@ async function fetchAllProps(apiKey, gamesRaw) {
 
   for (const game of gamesRaw) {
     try {
+      // Current props
       const url = 'https://api.the-odds-api.com/v4/sports/basketball_nba/events/' + game.id + '/odds'
         + '?apiKey=' + apiKey
         + '&regions=us&markets=' + markets
@@ -1250,7 +1260,6 @@ async function fetchAllProps(apiKey, gamesRaw) {
 
       const data = await r.json();
 
-      // Update credit display from headers
       const rem = r.headers.get('x-requests-remaining');
       const used = r.headers.get('x-requests-used');
       if (rem !== null) {
@@ -1258,19 +1267,16 @@ async function fetchAllProps(apiKey, gamesRaw) {
           'Props loading... ' + done + '/' + total + '  ·  Credits used: ' + used + '  ·  Remaining: ' + rem;
       }
 
-      // Parse: data.bookmakers[].markets[].outcomes[]
-      // Each outcome has: description (player name), name (Over/Under), price (decimal), point (line)
       const rawMarkets = [];
       for (const bm of (data.bookmakers || [])) {
         for (const mkt of (bm.markets || [])) {
           for (const outcome of (mkt.outcomes || [])) {
             rawMarkets.push({
-              key: mkt.key,
-              bookmaker: bm.key,
-              description: outcome.description,  // player name
-              name: outcome.name,                 // "Over" or "Under"
-              price: outcome.price,               // decimal odds
-              point: outcome.point                // the line (e.g. 25.5)
+              key: mkt.key, bookmaker: bm.key,
+              description: outcome.description,
+              name: outcome.name,
+              price: outcome.price,
+              point: outcome.point
             });
           }
         }
@@ -1279,7 +1285,6 @@ async function fetchAllProps(apiKey, gamesRaw) {
       const processed = processProps(game.id, game.away_team, game.home_team, game.commence_time, rawMarkets);
       allProps.push(...processed);
 
-      // Brief pause between requests
       await new Promise(res => setTimeout(res, 150));
     } catch(e) {
       done++;
@@ -1314,6 +1319,15 @@ async function fetchAllProps(apiKey, gamesRaw) {
   updatePropStats();
   updateTabCounts();
 }
+
+/**
+ * Compute movement between opening and current no-vig probs.
+ * Returns { awayMove, homeMove, dir, mag, hasMoved, icon, cls }
+ */
+
+/**
+ * Build opening prop cache from historical event odds.
+ */
 
 function buildGames(raw) {
   return raw.map(g => {
